@@ -4,9 +4,10 @@
 <style>
  html,body{margin:0;height:100%;background:#f5f7fa;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Arial,sans-serif;overflow:hidden}
  body{display:flex;gap:18px;padding:0 12px;align-items:stretch}
- .left{width:746px;flex:none;position:relative;overflow:hidden}
- .left .cam{position:absolute;left:0;top:0;transition:transform .7s cubic-bezier(.4,.1,.2,1)}
- .left img{display:block;width:746px}
+ .left{width:800px;flex:none;position:relative;overflow-y:auto;overflow-x:hidden;scroll-behavior:smooth;overscroll-behavior:contain}
+ .left::-webkit-scrollbar{width:10px}.left::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:6px}
+ .left .cam{position:relative;width:790px}
+ .left img{display:block;width:790px}
  .hot{position:absolute;border-radius:10px;cursor:pointer;box-shadow:0 0 0 3px rgba(245,158,11,.9);animation:pulse 1.6s infinite}
  @keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(245,158,11,.9)}50%{box-shadow:0 0 0 7px rgba(245,158,11,.25)}}
  .right{flex:1;display:flex;align-items:center;justify-content:center;min-width:0}
@@ -35,7 +36,7 @@ function go(k){
   cur = k; const s = S[k];
   document.getElementById("img").src = s.img;
   const y = s.cam === "top" ? 0 : Math.max(0, s.h - H());
-  document.getElementById("cam").style.transform = `translateY(${-y}px)`;
+  const L = document.querySelector(".left"); setTimeout(() => L.scrollTo({ top: y, behavior: "smooth" }), 60);
   const hs = document.getElementById("hots"); hs.innerHTML = "";
   s.hots.forEach(([x, yy, w, h, nx]) => { const d = document.createElement("div"); d.className = "hot"; Object.assign(d.style, { left: x + "px", top: yy + "px", width: w + "px", height: h + "px" }); d.onclick = () => go(nx); hs.append(d); });
 }

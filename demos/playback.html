@@ -42,7 +42,9 @@ function place(svgStr){
   const old = {}; el.querySelectorAll("g[data-k]").forEach((g) => { const r = g.getBoundingClientRect(); old[g.dataset.k] = [r.left, r.top]; });
   el.innerHTML = V.uniq(svgStr, "pb-"); const sv = el.querySelector("svg"); const [w, h] = V.size(sv);
   if (!sv.getAttribute("viewBox")) sv.setAttribute("viewBox", `0 0 ${w} ${h}`);
-  if (K === null) K = Math.min(2.6, (el.clientWidth - 20) / w, (el.clientHeight - 20) / h);
+  const cw = el.clientWidth, ch = el.clientHeight;
+  if (cw < 60 || ch < 60) { requestAnimationFrame(() => render()); return; }
+  K = Math.max(0.2, Math.min(2.6, (cw - 20) / w, (ch - 20) / h));
   sv.setAttribute("width", w * K); sv.setAttribute("height", h * K);
   if (!anim) { sv.classList.remove("flash"); void sv.getBoundingClientRect(); sv.classList.add("flash"); return; }
   sv.querySelectorAll("g[data-k]").forEach((g) => { const o = old[g.dataset.k]; if (!o) return; const r = g.getBoundingClientRect(); const dx = (o[0] - r.left) / K, dy = (o[1] - r.top) / K;
@@ -61,7 +63,9 @@ $("play").onclick = () => { if (timer) { clearInterval(timer); timer = null; $("
   $("play").textContent = "❚❚ Pause"; timer = setInterval(() => { if (k >= ST.length - 1) { $("play").click(); return; } go(k + 1); }, 1100); };
 $("tg").onclick = () => { anim = !anim; $("tg").classList.toggle("on", anim); };
 addEventListener("keydown", (e) => { if (e.key === "ArrowRight") go(k + 1); if (e.key === "ArrowLeft") go(k - 1); });
-addEventListener("resize", () => { K = null; render(); });
+addEventListener("resize", () => render());
+if (window.ResizeObserver) new ResizeObserver(() => render()).observe(document.getElementById("arr"));
+setTimeout(render, 400); setTimeout(render, 1500);
 render();
 </script>
 </body></html>
