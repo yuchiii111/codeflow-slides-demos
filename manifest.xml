@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:type="ContentApp">
+  <Id>6f3c2a1e-8b7d-4c55-9a1f-2d4e5b6c7a80</Id>
+  <Version>1.0.0.0</Version>
+  <ProviderName>Yinqi Tang</ProviderName>
+  <DefaultLocale>en-US</DefaultLocale>
+  <DisplayName DefaultValue="CodeFlow Demos"/>
+  <Description DefaultValue="Embed live CodeFlow demos in a slide."/>
+  <IconUrl DefaultValue="https://yuchiii111.github.io/codeflow-slides-demos/icon-32.png"/>
+  <HighResolutionIconUrl DefaultValue="https://yuchiii111.github.io/codeflow-slides-demos/icon-64.png"/>
+  <SupportUrl DefaultValue="https://yuchiii111.github.io/codeflow-slides-demos/"/>
+  <AppDomains>
+    <AppDomain>https://yuchiii111.github.io</AppDomain>
+    <AppDomain>https://codeflow.edfab.org</AppDomain>
+  </AppDomains>
+  <Hosts>
+    <Host Name="Presentation"/>
+  </Hosts>
+  <DefaultSettings>
+    <SourceLocation DefaultValue="https://yuchiii111.github.io/codeflow-slides-demos/addin.html"/>
+    <RequestedWidth>1000</RequestedWidth>
+    <RequestedHeight>560</RequestedHeight>
+  </DefaultSettings>
+  <Permissions>ReadWriteDocument</Permissions>
+  <AllowSnapshot>true</AllowSnapshot>
+</OfficeApp>
