@@ -2,6 +2,8 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Start a Project</title>
 <link rel="stylesheet" href="cf.css">
+<script src="views.js"></script>
+<script src="data/previews.js"></script>
 <style>
  body{background:var(--page);display:flex;flex-direction:column}
  .bar{height:56px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 22px;background:#fff;border-bottom:1px solid var(--line)}
@@ -37,8 +39,15 @@
  .topics button span{color:var(--faint);margin-left:4px}
  .topics button.on{background:var(--blue);border-color:var(--blue);color:#fff}
  .topics button.on span{color:#dbeafe}
- .grid{flex:1;overflow-y:auto;padding:10px 18px 18px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;align-content:start}
- .ex{border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;background:#fff;transition:all .15s;cursor:pointer}
+ .grid{flex:1;overflow-y:auto;padding:10px 18px 18px;display:grid;grid-template-columns:repeat(2,1fr);gap:12px;align-content:start}
+ .ex{border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;gap:12px;background:#fff;transition:all .15s;cursor:pointer}
+ .ex .tx{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+ .ex .ob{align-self:flex-start;margin-top:4px;background:var(--blue);color:#fff;border:0;border-radius:7px;padding:4px 12px;font-size:13.5px}
+ .pv{width:190px;height:128px;flex:none;border:1px solid var(--line);border-radius:10px;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fff}
+ .pv .b{position:absolute;inset:6px 22px;display:flex;align-items:center;justify-content:center}
+ .pv .ar{position:absolute;top:50%;margin-top:-11px;width:22px;height:22px;border-radius:50%;border:1px solid var(--line2);background:#fff;font-size:12px;line-height:20px;text-align:center;color:#6b7280;padding:0}
+ .pv .ar.l{left:3px} .pv .ar.r{right:3px}
+ .pv .vn{position:absolute;left:8px;bottom:3px;font-family:var(--mono);font-size:11px;color:var(--faint)}
  .ex:hover{border-color:var(--blue-line);box-shadow:0 4px 14px rgba(22,119,255,.08)}
  .ex.sel{border-color:var(--blue);background:var(--blue-soft)}
  .ex h5{margin:0;font-size:16px}
@@ -105,10 +114,15 @@ function renderGrid(){
   const list = EX.filter((e) => (topic === "All topics" || e.topic === topic) && (!q || (e.t + " " + e.d + " " + e.tags.join(" ")).toLowerCase().includes(q)));
   $("grid").innerHTML = ""; $("grid").scrollTop = 0;
   list.forEach((e) => { const d = document.createElement("div"); d.className = "ex";
-    d.innerHTML = `<h5>${e.t}</h5><p>${e.d}</p><div class="tags">${e.tags.map((t) => `<span class="tag">${t}</span>`).join("")}</div>`;
+    const pv = (CFD.previews[e.t] || []);
+    d.innerHTML = `<div class="tx"><h5>${e.t}</h5><p>${e.d}</p><div class="tags">${e.tags.map((t) => `<span class="tag">${t}</span>`).join("")}</div><button class="ob">Open example</button></div><div class="pv"><div class="b"></div>${pv.length > 1 ? '<button class="ar l">‹</button><button class="ar r">›</button>' : ""}<span class="vn"></span></div>`;
+    let pi = 0; const show = () => { if (!pv.length) return; V2fit(d.querySelector(".pv .b"), pv[pi].svg); d.querySelector(".vn").textContent = pv[pi].v; };
+    if (pv.length > 1) { d.querySelector(".ar.l").onclick = (ev) => { ev.stopPropagation(); pi = (pi + pv.length - 1) % pv.length; show(); }; d.querySelector(".ar.r").onclick = (ev) => { ev.stopPropagation(); pi = (pi + 1) % pv.length; show(); }; }
+    requestAnimationFrame(show);
     d.onclick = () => { document.querySelectorAll(".ex.sel").forEach((x) => x.classList.remove("sel")); d.classList.add("sel"); toast(`“${e.t}” opens with code, variables and views already set`); };
     $("grid").append(d); });
 }
+function V2fit(el, svg){ CFV.fit(el, svg, 1.2); }
 let tt; function toast(t){ $("toast").textContent = t; $("toast").classList.add("on"); clearTimeout(tt); tt = setTimeout(() => $("toast").classList.remove("on"), 2600); }
 function mode(m){
   $("eNew").classList.toggle("on", m === "new"); $("eCol").classList.toggle("on", m === "col");

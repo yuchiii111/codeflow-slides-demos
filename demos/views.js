@@ -112,13 +112,19 @@
   const toPts = (vals) => vals.map((v, i) => Array.isArray(v) ? v : [i, v]);
   V.fmt = fmt;
   // place an svg string into a box, scaled to fit (up to maxScale)
-  V.fit = (el, svgStr, maxScale = 1.8) => {
-    el.innerHTML = svgStr; const sv = el.querySelector("svg"); if (!sv) return;
-    const w = +sv.getAttribute("width"), h = +sv.getAttribute("height");
+  // place an svg string into a box, scaled to fit (up to maxScale); ids made unique per box
+  let uid = 0;
+  V.uniq = (svgStr, pre) => { pre = pre || ("u" + (++uid) + "-"); return svgStr.replace(/\bid="([^"]+)"/g, (m, a) => `id="${pre}${a}" data-k="${a}"`).replace(/url\(#([^)]+)\)/g, (m, a) => `url(#${pre}${a})`).replace(/href="#([^"]+)"/g, (m, a) => `href="#${pre}${a}"`); };
+  V.size = (sv) => { const vb = (sv.getAttribute("viewBox") || "").split(/[\s,]+/).map(Number); if (vb.length === 4 && vb[2] > 0) return [vb[2], vb[3]]; return [parseFloat(sv.getAttribute("width")) || 100, parseFloat(sv.getAttribute("height")) || 100]; };
+  V.fit = (el, svgStr, maxScale = 1.8, pre) => {
+    el.innerHTML = V.uniq(svgStr, pre); const sv = el.querySelector("svg"); if (!sv) return;
+    const [w, h] = V.size(sv);
+    if (!sv.getAttribute("viewBox")) sv.setAttribute("viewBox", `0 0 ${w} ${h}`);
     const cw = el.clientWidth - 16, ch = el.clientHeight - 16;
-    const k = Math.min(maxScale, cw / w, ch / h);
-    sv.setAttribute("width", Math.max(10, w * k)); sv.setAttribute("height", Math.max(10, h * k));
+    const k = Math.max(0.05, Math.min(maxScale, cw / w, ch / h));
+    sv.setAttribute("width", w * k); sv.setAttribute("height", h * k);
     sv.style.maxWidth = "none"; sv.style.maxHeight = "none";
+    return sv;
   };
   G.CFV = V;
 })(window);

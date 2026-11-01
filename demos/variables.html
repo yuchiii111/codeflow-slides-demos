@@ -3,6 +3,7 @@
 <title>Variables</title>
 <link rel="stylesheet" href="cf.css">
 <script src="views.js"></script>
+<script src="data/variables.js"></script>
 <style>
  body{background:var(--page);display:grid;grid-template-columns:560px 1fr;gap:16px;padding:16px 20px}
  .left{display:flex;flex-direction:column;gap:14px;min-height:0}
@@ -90,27 +91,31 @@ const CODE = [
   '        best_cost[nxt] = child.g',
   '        frontier.append(child)',
 ];
-const NAMES = ["graph", "search_tree", "frontier", "best_cost", "path", "current", "child"];
-const NODES = [{ state: "R", g: 1, h: 2, f: 3 }, { state: "F", g: 2, h: 2, f: 4 }, { state: "P", g: 3, h: 1, f: 4 }];
+const D = CFD.variables;
 const VARS = {
-  graph: { type: "Graph", modes: ["auto", "graph"], auto: "graph", depth: false },
-  search_tree: { type: "Tree", modes: ["auto", "graph"], auto: "graph", depth: false },
-  frontier: { type: "List[Node]", modes: ["auto", "array cells"], auto: "array cells", depth: true },
-  best_cost: { type: "Dict[str, int]", modes: ["auto", "table"], auto: "table", depth: true },
-  path: { type: "List[str]", modes: ["auto", "array cells"], auto: "array cells", depth: true },
-  current: { type: "Node", modes: ["auto", "table"], auto: "table", depth: true },
-  child: { type: "Node", modes: ["auto", "table"], auto: "table", depth: true },
-  'best_cost["P"]': { type: "int", modes: ["auto"], auto: "value", depth: false, of: "best_cost" },
+  graph: { type: "Graph", key: "graph" },
+  frontier: { type: "List[Node]", key: "frontier" },
+  best_cost: { type: "Dict[str, int]", key: "best_cost" },
+  path: { type: "List[str]", key: "path" },
+  current: { type: "Node", key: "current" },
+  child: { type: "Node", key: "child" },
+  'best_cost["P"]': { type: "int", key: "best_cost_P", of: "best_cost" },
 };
-const ALL_MODES = ["auto", "array cells", "bar", "line", "table", "graph"];
+const LABEL = { auto: "auto", array_cells: "array cells", table: "table", graph: "graph", bar: "bar", line: "line" };
+const ALL_MODES = ["auto", "array_cells", "table", "graph", "bar", "line"];
 const COLORS = ["#64748b", "#2563eb", "#16a34a", "#dc2626", "#9333ea"];
-const cfg = {}; Object.keys(VARS).forEach((k) => cfg[k] = { mode: "auto", depth: 2, color: COLORS[0] });
+Object.values(VARS).forEach((v) => { const d = D[v.key]; v.modes = d.compatible; v.svg = d.svg;
+  const m0 = d.compatible.find((k) => k !== "auto") || "auto";
+  v.can = {}; d.compatible.forEach((m) => { const mm = m;
+    v.can[mm] = { depth: d.svg[`${mm}|1|c0`] !== d.svg[`${mm}|2|c0`] || d.svg[`${mm}|2|c0`] !== d.svg[`${mm}|3|c0`], color: d.svg[`${mm}|2|c0`] !== d.svg[`${mm}|2|c1`] }; });
+  v.auto = d.compatible.find((k) => k !== "auto" && d.svg[`${k}|2|c0`] === d.svg["auto|2|c0"]) || null; });
+const cfg = {}; Object.keys(VARS).forEach((k) => cfg[k] = { mode: "auto", depth: 2, ci: 0 });
 let watched = ["graph", "frontier"], selected = "frontier";
 const $ = (id) => document.getElementById(id);
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
 function hlLine(t){
   let s = esc(t).replace(/("[^"]*")/g, '<span class="str">$1</span>').replace(/\b(while|for|in|if|break|lambda)\b/g, '<span class="kw">$1</span>').replace(/\b(\d+)\b/g, '<span class="num">$1</span>');
-  return s.replace(/(?<!\.)\b(graph|search_tree|frontier|best_cost|path|current|child)\b(?![^<]*>)/g, (m) => `<span class="id${watched.includes(m) ? " w" : ""}" data-n="${m}">${m}</span>`);
+  return s.replace(/(?<!\.)\b(graph|frontier|best_cost|path|current|child)\b(?![^<]*>)/g, (m) => `<span class="id${watched.includes(m) ? " w" : ""}" data-n="${m}">${m}</span>`);
 }
 function renderCode(){ $("code").innerHTML = CODE.map((t, i) => `<div class="ln"><span class="n">${i + 1}</span><span>${hlLine(t) || "&nbsp;"}</span></div>`).join("");
   document.querySelectorAll(".id").forEach((e) => e.onclick = () => { if (document.body.classList.contains("sel")) add(e.dataset.n); }); }
@@ -132,42 +137,22 @@ function add(n, viaExpr){
 $("add").onclick = () => add(($("expr").value.trim() || 'best_cost["P"]').replace(/'/g, '"'), true);
 $("expr").onkeydown = (e) => { if (e.key === "Enter") $("add").click(); };
 $("selSw").onclick = () => { document.body.classList.toggle("sel"); };
-function nodeTable(n, c){ return V.table(n, { color: c }); }
-function preview(n){
-  const c = cfg[n], v = VARS[n], mode = c.mode === "auto" ? v.auto : c.mode, col = c.color, d = c.depth;
-  $("pInfo").textContent = (c.mode === "auto" ? "auto → " : "") + mode + (v.depth ? ` · depth ${d}` : "");
-  if (n === "graph" || n === "search_tree") {
-    const nodes = n === "graph" ? { S: [40, 90], R: [150, 30], F: [150, 150], P: [270, 60], B: [380, 110] } : { S: [150, 30], R: [80, 120], F: [220, 120], P: [80, 210] };
-    const edges = n === "graph" ? [["S", "R", 1], ["S", "F", 2], ["R", "P", 2], ["F", "B", 3], ["P", "B", 1]] : [["S", "R", 1], ["S", "F", 2], ["R", "P", 2]];
-    return V.graph(nodes, edges, { color: col, hl: ["S"] });
-  }
-  if (n === "frontier") {
-    if (d <= 1) return V.array(NODES.map(() => "Node"), { color: col });
-    // depth 2: each item expands into its fields
-    const parts = NODES.map((x) => V.table(x, { color: col })); let X = 10, body = "";
-    parts.forEach((p, i) => { const w = +p.match(/width="([\d.]+)"/)[1], h = +p.match(/height="([\d.]+)"/)[1];
-      body += `<rect x="${X - 6}" y="4" width="${w + 12}" height="${h + 8}" fill="none" stroke="${col}" stroke-width="2"/><g transform="translate(${X},8)">${p.replace(/^<svg[^>]*>|<\/svg>$/g, "")}</g><text x="${X + w / 2}" y="${h + 30}" text-anchor="middle" font-size="15" fill="#dc2626">${i}</text>`; X += w + 12; });
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${X + 4} 150" width="${X + 4}" height="150" font-family="-apple-system,Segoe UI,Arial,sans-serif">${body}</svg>`;
-  }
-  if (n === "best_cost") return V.table({ S: 0, R: 1, F: 2, P: 3 }, { color: col });
-  if (n === "path") return V.array([], { color: col }).replace("</svg>", '<text x="10" y="40" font-size="16" fill="#9ca3af">[ ] (empty until the goal)</text></svg>');
-  if (n === "current" || n === "child") return d <= 0 ? V.value("Node", { color: col }) : V.table(n === "current" ? { state: "S", g: 0, h: 3, f: 3 } : NODES[0], { color: col });
-  if (n === 'best_cost["P"]') return V.value(3, { color: col });
-}
 function renderDrawer(){
   const n = selected;
   if (!n) { $("dName").textContent = "—"; $("dType").textContent = ""; $("modes").innerHTML = ""; $("pv").innerHTML = ""; return; }
-  const v = VARS[n], c = cfg[n];
+  const v = VARS[n], c = cfg[n], can = v.can[c.mode] || { depth: false, color: false };
   $("dName").textContent = n; $("dType").textContent = v.type;
   $("modes").innerHTML = "";
-  ALL_MODES.forEach((m) => { const b = document.createElement("button"); b.textContent = m; b.disabled = !v.modes.includes(m); b.className = c.mode === m ? "on" : ""; b.onclick = () => { c.mode = m; renderDrawer(); }; $("modes").append(b); });
-  $("dv").textContent = v.depth ? c.depth : "–";
-  $("dm").disabled = $("dp").disabled = !v.depth;
+  ALL_MODES.forEach((m) => { const b = document.createElement("button"); b.innerHTML = m === "auto" && v.auto ? `auto <small style="opacity:.7">→ ${LABEL[v.auto]}</small>` : LABEL[m]; b.disabled = !v.modes.includes(m); b.className = c.mode === m ? "on" : ""; b.onclick = () => { c.mode = m; renderDrawer(); }; $("modes").append(b); });
+  $("dv").textContent = can.depth ? c.depth : "–";
+  $("dm").disabled = $("dp").disabled = !can.depth;
   $("sw").innerHTML = "";
-  COLORS.forEach((col) => { const b = document.createElement("button"); b.style.background = col; b.className = c.color === col ? "on" : ""; b.onclick = () => { c.color = col; renderDrawer(); }; $("sw").append(b); });
-  V.fit($("pv"), preview(n), 1.7);
+  COLORS.forEach((col, ci) => { const b = document.createElement("button"); b.style.background = col; b.disabled = !can.color; b.style.opacity = can.color ? 1 : .35; b.className = c.ci === ci ? "on" : ""; b.onclick = () => { c.ci = ci; renderDrawer(); }; $("sw").append(b); });
+  const key = `${c.mode}|${can.depth ? c.depth : 2}|c${can.color ? c.ci : 0}`;
+  $("pInfo").textContent = (c.mode === "auto" ? "auto" : LABEL[c.mode]) + (can.depth ? ` · depth ${c.depth}` : "");
+  V.fit($("pv"), v.svg[key] || v.svg["auto|d|c0"], 1.8);
 }
-$("dm").onclick = () => { const c = cfg[selected]; c.depth = Math.max(0, c.depth - 1); renderDrawer(); };
+$("dm").onclick = () => { const c = cfg[selected]; c.depth = Math.max(1, c.depth - 1); renderDrawer(); };
 $("dp").onclick = () => { const c = cfg[selected]; c.depth = Math.min(3, c.depth + 1); renderDrawer(); };
 function render(fresh){ renderCode(); renderChips(fresh); renderDrawer(); }
 render();

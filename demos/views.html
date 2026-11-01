@@ -3,6 +3,7 @@
 <title>Choosing a View</title>
 <link rel="stylesheet" href="cf.css">
 <script src="views.js"></script>
+<script src="data/views.js"></script>
 <style>
  body{background:var(--page);display:grid;grid-template-columns:400px 1fr;gap:16px;padding:16px 20px}
  .list{display:flex;flex-direction:column;min-height:0}
@@ -38,26 +39,29 @@
   <div class="stage"><div id="stage"></div><div class="note" id="note"></div></div>
 </div>
 <script>
-const V = CFV;
-const scores = [7, 3, 5, 1, 9];
-const points = [[1, 2], [2, 3], [3, 5], [4, 4], [5, 6]];
+const V = CFV, D = CFD.views;
+const LABEL = { array_cells: "array cells", heap_dual: "heap", hash_table: "hash table", linked_list: "linked list" };
+const lab = (k) => LABEL[k] || k;
 const VARS = [
-  { n: "scores", t: "List[int]", v: "[7, 3, 5, 1, 9]", modes: { "array cells": () => V.array(scores), bar: () => V.bar(scores, { w: 460, h: 270 }), line: () => V.line(scores, { w: 460, h: 270 }), scatter: () => V.scatter(scores, { w: 460, h: 270 }), heap: () => V.heap([9, 7, 5, 1, 3]) }, auto: "array cells", note: "line / scatter: x = index" },
-  { n: "points", t: "List[(x, y)]", v: "[(1, 2), (2, 3), (3, 5), …]", modes: { matrix: () => V.matrix(points), line: () => V.line(points, { w: 460, h: 270 }), scatter: () => V.scatter(points, { w: 460, h: 270 }) }, auto: "matrix", note: "line and scatter can be overlaid in the workspace" },
-  { n: "grid", t: "List[List[int]]", v: "[[1, 2, 3], [4, 5, 6]]", modes: { matrix: () => V.matrix([[1, 2, 3], [4, 5, 6]]) }, auto: "matrix" },
-  { n: "record", t: "Dict[str, Any]", v: '{"state": "B", "g": 5, "h": 0}', modes: { table: () => V.table({ state: "B", g: 5, h: 0, f: 5 }) }, auto: "table" },
-  { n: "linked", t: "Node · .next", v: 'Node("A", Node("B", …))', modes: { "linked list": () => V.linked(["A", "B", "C"]) }, auto: "linked list" },
-  { n: "buckets", t: "List[List[(k,v)]]", v: '[[("a", 1)], [], [("c", 3), …]]', modes: { "hash table": () => V.hash([[["a", 1]], [], [["c", 3], ["k", 11]]]) }, auto: "hash table" },
-  { n: "tree", t: "TreeNode", v: "TreeNode(8, TreeNode(3, …), …)", modes: { tree: () => V.tree(["8", ["3", ["1"], ["6"]], ["10", null, ["14"]]]) }, auto: "tree" },
-  { n: "graph", t: "Graph", v: 'Graph({"A": {"B": 1, …}})', modes: { graph: () => V.graph({ A: [40, 110], B: [170, 40], C: [170, 180], D: [300, 110] }, [["A", "B", 1], ["A", "C", 2], ["B", "D", 3], ["C", "D", 1], ["B", "C", 1]]) }, auto: "graph" },
+  { n: "scores", t: "List[int]", v: "[7, 3, 5, 1, 9]", note: "line / scatter: x = index" },
+  { n: "points", t: "List[(x, y)]", v: "[(1, 2), (2, 3), (3, 5), …]", note: "line and scatter can be overlaid in the workspace" },
+  { n: "grid", t: "List[List[int]]", v: "[[1, 2, 3], [4, 5, 6]]" },
+  { n: "record", t: "Dict[str, Any]", v: '{"state": "B", "g": 5, "h": 0, "f": 5}' },
+  { n: "linked", t: "Node · .next", v: 'Node("A", Node("B", Node("C")))' },
+  { n: "buckets", t: "List[List[(k,v)]]", v: '[[("a", 1)], [], [("c", 3), ("k", 11)]]' },
+  { n: "tree", t: "TreeNode", v: "TreeNode(8, TreeNode(3, …), …)" },
+  { n: "graph", t: "Graph", v: 'Graph({"A": {"B": 1, "C": 2}, …})' },
 ];
+const ORDER = ["array_cells", "matrix", "table", "linked_list", "hash_table", "tree", "graph", "bar", "line", "scatter", "heap_dual"];
+VARS.forEach((x) => { const d = D[x.n]; x.modes = ORDER.filter((k) => d.compatible.includes(k));
+  x.auto = x.modes.find((k) => d.svg[k] === d.svg.auto) || null; });
 let cur = VARS[0], mode = "auto";
 const $ = (id) => document.getElementById(id);
 function rows(){ $("rows").innerHTML = ""; VARS.forEach((x) => { const d = document.createElement("div"); d.className = "row" + (x === cur ? " on" : "");
   d.innerHTML = `<div><div class="nm">${x.n}</div><div class="val">${x.v.replace(/</g, "&lt;")}</div></div><span class="type">${x.t}</span>`; d.onclick = () => { cur = x; mode = "auto"; render(); }; $("rows").append(d); }); }
-function opts(){ $("opts").innerHTML = ""; ["auto", ...Object.keys(cur.modes)].forEach((m) => { const b = document.createElement("button"); b.className = m === mode ? "on" : "";
-  b.innerHTML = m === "auto" ? `auto<small>→ ${cur.auto}</small>` : m; b.onclick = () => { mode = m; render(); }; $("opts").append(b); }); }
-function render(){ rows(); opts(); const m = mode === "auto" ? cur.auto : mode; V.fit($("stage"), cur.modes[m](), 2.2); $("note").textContent = cur.note || ""; }
+function opts(){ $("opts").innerHTML = ""; ["auto", ...cur.modes].forEach((m) => { const b = document.createElement("button"); b.className = m === mode ? "on" : "";
+  b.innerHTML = m === "auto" ? (cur.auto ? `auto<small>→ ${lab(cur.auto)}</small>` : "auto") : lab(m); b.onclick = () => { mode = m; render(); }; $("opts").append(b); }); }
+function render(){ rows(); opts(); V.fit($("stage"), D[cur.n].svg[mode], 2.4); $("note").textContent = cur.note || ""; }
 window.addEventListener("resize", render);
 render();
 </script>

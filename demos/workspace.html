@@ -3,6 +3,7 @@
 <title>Visualization Workspace</title>
 <link rel="stylesheet" href="cf.css">
 <script src="views.js"></script>
+<script src="data/workspace.js"></script>
 <style>
  body{background:var(--page);padding:14px 18px;display:flex}
  .ws{flex:1;display:flex;flex-direction:column;min-height:0;min-width:0}
@@ -19,7 +20,7 @@
  .ov input{accent-color:var(--blue);width:16px;height:16px}
  .ov .st{color:var(--muted);font-size:14px}
  .board{flex:1;position:relative;min-height:0;padding:12px}
- .board.masonry{display:grid;grid-template-columns:repeat(2,1fr);grid-auto-rows:minmax(0,1fr);gap:12px}
+ .board.masonry{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr);gap:12px}
  .board.windows{background-image:radial-gradient(#e5e7eb 1px,transparent 1px);background-size:18px 18px}
  .board.windows .panel{position:absolute;box-shadow:0 8px 24px rgba(15,23,42,.14)}
  .board.windows .panel-h{cursor:move}
@@ -36,7 +37,7 @@
 <div class="card ws">
   <div class="top">
     <h2>Visualization</h2>
-    <div class="tl"><button class="btn ib" id="first">⏮</button><button class="btn ib" id="prev">←</button><button class="btn primary" id="play">▶ Play</button><button class="btn ib" id="next">→</button><span class="lab" id="lab"></span><input type="range" id="rng" min="0" max="4" value="0"></div>
+    <div class="tl"><button class="btn ib" id="first">⏮</button><button class="btn ib" id="prev">←</button><button class="btn primary" id="play">▶ Play</button><button class="btn ib" id="next">→</button><span class="lab" id="lab"></span><span class="muted" id="ln" style="font-size:14px;min-width:52px"></span><input type="range" id="rng" min="0" max="14" value="14"></div>
     <div class="sp"></div>
     <div class="seg" id="layout"><button class="on" data-m="masonry">Masonry</button><button data-m="windows">Windows</button></div>
   </div>
@@ -46,59 +47,53 @@
   <div class="board masonry" id="board"></div>
 </div>
 <script>
-const V = CFV, $ = (id) => document.getElementById(id);
-const PTS = [[1, 2], [2, 3], [3, 5], [4, 4]];
-const S = []; { let m = 0, b = 0; const lossOf = () => Math.round(PTS.reduce((a, [x, y]) => a + (m * x + b - y) ** 2, 0) / PTS.length * 1000) / 1000;
-  const snap = () => S.push({ m, b, fit: [[0.5, m * 0.5 + b], [4.5, m * 4.5 + b]], loss: lossOf(), err: PTS.map(([x, y]) => Math.round((m * x + b - y) * 100) / 100) });
-  snap(); for (let k = 0; k < 4; k++) { const e = PTS.map(([x, y]) => m * x + b - y); const gm = e.reduce((a, v, i) => a + 2 * v * PTS[i][0], 0) / 4, gb = e.reduce((a, v) => a + 2 * v, 0) / 4; m = Math.round((m - 0.1 * gm) * 1000) / 1000; b = Math.round((b - 0.1 * gb) * 1000) / 1000; snap(); } }
-let step = 0, mode = "masonry", grouped = false, timer = null, fresh = null;
-const lossHist = () => S.slice(0, step + 1).map((s, i) => [i, s.loss]);
-const ymax = Math.ceil(Math.max(7, ...S.flatMap((t) => t.fit.map((q) => q[1])))), emin = Math.floor(Math.min(...S.flatMap((t) => t.err))), emax = Math.ceil(Math.max(0, ...S.flatMap((t) => t.err))), lmax = Math.ceil(Math.max(...S.map((t) => t.loss)));
-const RNG = { x0: 0, x1: 5, y0: 0, y1: ymax };
-let SZ = { w: 460, h: 280 };
+const V = CFV, W = CFD.workspace, $ = (id) => document.getElementById(id);
+const TIMES = [...new Set(Object.values(W.plain).flatMap((a) => a.map((x) => x.t)))].sort((a, b) => a - b);
+let step = TIMES.length - 1, mode = "masonry", grouped = false, timer = null, fresh = null;
+const KIND = { points: "scatter", fit_points: "line", loss: "auto", errors: "bar" };
+const latest = (arr, t) => { let r = null; for (const x of arr) if (x.t <= t) r = x; return r; };
 const PANELS = () => grouped
-  ? [{ id: "grp", title: "fit_points + points", k: "overlay", svg: () => V.chart([{ kind: "scatter", pts: PTS, color: "#64748b", name: "points" }, { kind: "line", pts: S[step].fit, color: "#dc2626", name: "fit_points" }], Object.assign(SZ, RNG)) },
-     { id: "loss", title: "loss", k: "line · history", svg: () => V.chart([{ kind: "line", pts: lossHist(), color: "#2563eb" }], Object.assign({}, SZ, { x0: 0, x1: 4, y0: 0, y1: lmax })) },
-     { id: "err", title: "errors", k: "bar", svg: () => V.bar(S[step].err, Object.assign({}, SZ, { y0: emin, y1: emax })) }]
-  : [{ id: "points", title: "points", k: "scatter", svg: () => V.chart([{ kind: "scatter", pts: PTS, color: "#64748b" }], Object.assign(SZ, RNG)) },
-     { id: "fit", title: "fit_points", k: "line", svg: () => V.chart([{ kind: "line", pts: S[step].fit, color: "#dc2626" }], Object.assign(SZ, RNG)) },
-     { id: "loss", title: "loss", k: "line · history", svg: () => V.chart([{ kind: "line", pts: lossHist(), color: "#2563eb" }], Object.assign({}, SZ, { x0: 0, x1: 4, y0: 0, y1: lmax })) },
-     { id: "err", title: "errors", k: "bar", svg: () => V.bar(S[step].err, Object.assign({}, SZ, { y0: emin, y1: emax })) }];
+  ? [{ id: "grp", title: "fit_points + points", k: "overlay", src: W.overlay.fit_points }, { id: "loss", title: "loss", k: KIND.loss, src: W.plain.loss }, { id: "err", title: "errors", k: KIND.errors, src: W.plain.errors }]
+  : [{ id: "points", title: "points", k: KIND.points, src: W.plain.points }, { id: "fit", title: "fit_points", k: KIND.fit_points, src: W.plain.fit_points }, { id: "loss", title: "loss", k: KIND.loss, src: W.plain.loss }, { id: "err", title: "errors", k: KIND.errors, src: W.plain.errors }];
 const WL = {}; let z = 10;
-function defaultLayout(i, n){ const B = $("board").getBoundingClientRect(); const w = Math.min(470, B.width * 0.42), h = Math.min(300, B.height * 0.62);
+function defaultLayout(i){ const B = $("board").getBoundingClientRect(); const w = Math.min(470, B.width * 0.4), h = Math.min(300, B.height * 0.6);
   const spots = [[14, 12], [B.width * 0.31, B.height - h - 12], [B.width - w - 14, 12], [B.width - w - 70, B.height - h - 24]]; const [x, y] = spots[i % 4]; return { x, y, w, h }; }
 function build(){
   const bd = $("board"); bd.className = "board " + mode; bd.innerHTML = "";
-  PANELS().forEach((p, i, arr) => {
+  PANELS().forEach((p, i) => {
     const el = document.createElement("div"); el.className = "panel" + (p.id === "grp" ? " grp" : "") + (p.id === fresh ? " new" : ""); el.dataset.id = p.id;
     el.innerHTML = `<div class="panel-h"><span>${p.title}<span class="k">${p.k}</span></span><span class="muted">⚙</span></div><div class="panel-b"></div><div class="rz"></div>`;
-    if (mode === "windows") { const L = WL[p.id] || (WL[p.id] = defaultLayout(i, arr.length)); Object.assign(el.style, { left: L.x + "px", top: L.y + "px", width: L.w + "px", height: L.h + "px", zIndex: L.z || i + 1 }); dragify(el, p.id); }
-    if (mode === "masonry" && p.id === "grp") el.style.gridRow = "span 2";
+    if (mode === "windows") { const L = WL[p.id] || (WL[p.id] = defaultLayout(i)); Object.assign(el.style, { left: L.x + "px", top: L.y + "px", width: L.w + "px", height: L.h + "px", zIndex: L.z || i + 1 }); dragify(el, p.id); }
     bd.append(el);
   });
   fresh = null; draw();
 }
-function draw(){ PANELS().forEach((p) => { const el = document.querySelector(`.panel[data-id="${p.id}"] .panel-b`); if (!el) return; const k = 1.35; SZ = { w: Math.max(200, (el.clientWidth - 16) / k), h: Math.max(120, (el.clientHeight - 16) / k) }; V.fit(el, p.svg(), k); });
-  $("lab").textContent = `Step ${step + 1} of ${S.length}`; $("rng").value = step; }
+function draw(){
+  const t = TIMES[step];
+  PANELS().forEach((p) => { const el = document.querySelector(`.panel[data-id="${p.id}"] .panel-b`); if (!el) return; const x = latest(p.src, t);
+    if (x) V.fit(el, x.svg, 1.7); else el.innerHTML = '<span class="muted" style="font-size:14px">no value yet</span>'; });
+  const line = Object.values(grouped ? W.overlay : W.plain).flatMap((a) => a).find((x) => x.t === t);
+  $("lab").textContent = `Step ${step + 1} of ${TIMES.length}`; $("ln").textContent = line ? `line ${line.line}` : ""; $("rng").value = step;
+}
 function dragify(el, id){
   const h = el.querySelector(".panel-h"), rz = el.querySelector(".rz");
-  const front = () => { WL[id].z = ++z; el.style.zIndex = z; };
-  el.addEventListener("pointerdown", front);
+  el.addEventListener("pointerdown", () => { WL[id].z = ++z; el.style.zIndex = z; });
   const track = (ev, fn) => { ev.preventDefault(); const sx = ev.clientX, sy = ev.clientY, L0 = Object.assign({}, WL[id]); el.classList.add("drag");
-    const mv = (e) => { fn(L0, e.clientX - sx, e.clientY - sy); }; const up = () => { el.classList.remove("drag"); removeEventListener("pointermove", mv); removeEventListener("pointerup", up); draw(); };
+    const mv = (e) => fn(L0, e.clientX - sx, e.clientY - sy); const up = () => { el.classList.remove("drag"); removeEventListener("pointermove", mv); removeEventListener("pointerup", up); draw(); };
     addEventListener("pointermove", mv); addEventListener("pointerup", up); };
   h.addEventListener("pointerdown", (ev) => track(ev, (L0, dx, dy) => { WL[id].x = L0.x + dx; WL[id].y = L0.y + dy; el.style.left = WL[id].x + "px"; el.style.top = WL[id].y + "px"; }));
   rz.addEventListener("pointerdown", (ev) => track(ev, (L0, dx, dy) => { WL[id].w = Math.max(220, L0.w + dx); WL[id].h = Math.max(160, L0.h + dy); el.style.width = WL[id].w + "px"; el.style.height = WL[id].h + "px"; }));
 }
-function go(k){ step = Math.max(0, Math.min(S.length - 1, k)); draw(); }
+function go(k){ step = Math.max(0, Math.min(TIMES.length - 1, k)); draw(); }
+$("rng").max = TIMES.length - 1;
 $("first").onclick = () => go(0); $("prev").onclick = () => go(step - 1); $("next").onclick = () => go(step + 1);
 $("rng").oninput = (e) => go(+e.target.value);
 $("play").onclick = () => { if (timer) { clearInterval(timer); timer = null; $("play").textContent = "▶ Play"; return; }
-  if (step >= S.length - 1) go(0); $("play").textContent = "❚❚ Pause"; timer = setInterval(() => { if (step >= S.length - 1) { $("play").click(); return; } go(step + 1); }, 900); };
+  if (step >= TIMES.length - 1) go(0); $("play").textContent = "❚❚ Pause"; timer = setInterval(() => { if (step >= TIMES.length - 1) { $("play").click(); return; } go(step + 1); }, 700); };
 $("layout").onclick = (e) => { const m = e.target.dataset.m; if (!m) return; mode = m; [...$("layout").children].forEach((b) => b.classList.toggle("on", b.dataset.m === m)); build(); };
 function ovState(){ $("bOv").disabled = grouped || !($("cP").checked && $("cF").checked); $("bUn").disabled = !grouped; $("ovSt").textContent = grouped ? "2 layers grouped" : `${[$("cP"), $("cF")].filter((c) => c.checked).length} selected`; }
 $("cP").onchange = $("cF").onchange = ovState;
-$("bOv").onclick = () => { grouped = true; fresh = "grp"; if (WL.points) WL.grp = Object.assign({}, WL.points); ovState(); build(); };
+$("bOv").onclick = () => { grouped = true; fresh = "grp"; if (WL.points) WL.grp = Object.assign({}, WL.fit || WL.points); ovState(); build(); };
 $("bUn").onclick = () => { grouped = false; ovState(); build(); };
 addEventListener("resize", () => draw());
 ovState(); build();
