@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Variables</title>
+<link rel="stylesheet" href="cf.css">
+<script src="views.js"></script>
+<style>
+ body{background:var(--page);display:grid;grid-template-columns:560px 1fr;gap:16px;padding:16px 20px}
+ .left{display:flex;flex-direction:column;gap:14px;min-height:0}
+ .codecard{flex:1;display:flex;flex-direction:column;min-height:0}
+ .codecard .code{margin:10px 14px 12px;flex:1;font-size:14px;line-height:1.5}
+ .id{border-radius:4px;padding:0 2px;margin:0 -2px;transition:background .12s}
+ body.sel .id{cursor:pointer;background:rgba(250,204,21,.18);box-shadow:inset 0 -2px 0 rgba(250,204,21,.6)}
+ body.sel .id:hover{background:rgba(250,204,21,.75);color:#111}
+ .id.w{color:#fde68a}
+ .switch{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:500;color:#374151;cursor:pointer;user-select:none}
+ .switch i{width:40px;height:22px;border-radius:12px;background:#d1d5db;position:relative;transition:.15s}
+ .switch i::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.15s}
+ body.sel .switch i{background:var(--blue)} body.sel .switch i::after{left:21px}
+ .vars{flex:none}
+ .chips{display:flex;flex-wrap:wrap;gap:10px;padding:12px 16px 14px;min-height:62px}
+ .chip{display:flex;align-items:center;gap:10px;border:1.5px solid var(--line);border-radius:10px;padding:7px 10px 7px 14px;font-family:var(--mono);font-size:15px;background:#fff;transition:all .2s}
+ .chip.on{border-color:var(--blue);background:var(--blue-soft)}
+ .chip.new{animation:pop .5s}
+ @keyframes pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.06)}100%{transform:none;opacity:1}}
+ .chip button{border:0;background:none;padding:0 2px;font-size:16px;color:#6b7280}
+ .chip button:hover{color:var(--blue)} .chip .x:hover{color:var(--red)}
+ .addrow{display:flex;gap:8px;padding:0 16px 14px}
+ .addrow input{flex:1;font-family:var(--mono);font-size:15px;border:1px solid var(--line2);border-radius:8px;padding:7px 12px}
+ .hint{padding:0 16px 10px;font-size:14px;color:var(--muted);min-height:18px}
+ .hint b{color:var(--green);font-weight:600}
+ .drawer{display:flex;flex-direction:column;min-height:0}
+ .drawer .body{flex:1;display:flex;flex-direction:column;gap:12px;padding:14px 18px 16px;min-height:0}
+ .settings{display:flex;flex-wrap:wrap;column-gap:28px;row-gap:4px}
+ .settings .f{margin-bottom:6px}
+ .f{margin-bottom:16px} .f label{display:block;font-size:14px;color:var(--muted);margin-bottom:7px;font-weight:500}
+ .opts{display:flex;flex-wrap:wrap;gap:7px}
+ .opts button{border:1px solid var(--line2);background:#fff;border-radius:8px;padding:6px 12px;font-size:14.5px}
+ .opts button.on{border-color:var(--blue);background:var(--blue);color:#fff}
+ .opts button:disabled{opacity:.35;cursor:not-allowed}
+ .step{display:inline-flex;align-items:center;border:1px solid var(--line2);border-radius:8px;overflow:hidden}
+ .step button{border:0;background:#f9fafb;width:36px;height:34px;font-size:18px}
+ .step span{width:46px;text-align:center;font-size:16px;font-family:var(--mono)}
+ .sw{display:flex;gap:8px}
+ .sw button{width:30px;height:30px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px var(--line2)}
+ .sw button.on{box-shadow:0 0 0 2px var(--text)}
+ .prev{flex:1;border:1px dashed var(--line2);border-radius:12px;display:flex;flex-direction:column;min-height:0}
+ .prev .t{padding:8px 12px;font-size:13.5px;color:var(--muted);border-bottom:1px dashed var(--line2);display:flex;justify-content:space-between}
+ .prev .v{flex:1;display:flex;align-items:center;justify-content:center;padding:10px;min-height:0}
+ .prev .v svg{max-width:100%;max-height:100%}
+ .empty{color:var(--faint);font-size:15px}
+</style></head>
+<body class="sel">
+<div class="left">
+  <div class="card codecard">
+    <div class="card-h">Code <label class="switch" id="selSw"><i></i>Select variables</label></div>
+    <div class="code" id="code"></div>
+  </div>
+  <div class="card vars">
+    <div class="card-h">Variables <span class="muted" style="font-weight:400;font-size:14px">click a name, or type an expression</span></div>
+    <div class="chips" id="chips"></div>
+    <div class="addrow"><input id="expr" placeholder='best_cost["P"]'><button class="btn primary" id="add">+ Add</button></div>
+    <div class="hint" id="hint"></div>
+  </div>
+</div>
+<div class="card drawer">
+  <div class="card-h"><span>Watch settings · <span class="mono" id="dName">frontier</span></span><span class="type" id="dType"></span></div>
+  <div class="body">
+    <div class="settings">
+      <div class="f" style="flex-basis:100%"><label>Display mode</label><div class="opts" id="modes"></div></div>
+      <div class="f"><label>Depth</label><div class="step"><button id="dm">−</button><span id="dv">2</span><button id="dp">+</button></div></div>
+      <div class="f"><label>Color</label><div class="sw" id="sw"></div></div>
+    </div>
+    <div class="prev"><div class="t"><span>preview</span><span id="pInfo"></span></div><div class="v" id="pv"></div></div>
+  </div>
+</div>
+<script>
+const V = CFV;
+const CODE = [
+  'graph = Graph(roads)',
+  'frontier = [Node("S", h=3)]',
+  'best_cost = {"S": 0}',
+  'path = []',
+  'while frontier:',
+  '    frontier.sort(key=lambda n: n.f)',
+  '    current = frontier.pop(0)',
+  '    if current.state == goal:',
+  '        path = current.path(); break',
+  '    for nxt, cost in graph[current.state].items():',
+  '        child = current.extend(nxt, cost, h[nxt])',
+  '        best_cost[nxt] = child.g',
+  '        frontier.append(child)',
+];
+const NAMES = ["graph", "search_tree", "frontier", "best_cost", "path", "current", "child"];
+const NODES = [{ state: "R", g: 1, h: 2, f: 3 }, { state: "F", g: 2, h: 2, f: 4 }, { state: "P", g: 3, h: 1, f: 4 }];
+const VARS = {
+  graph: { type: "Graph", modes: ["auto", "graph"], auto: "graph", depth: false },
+  search_tree: { type: "Tree", modes: ["auto", "graph"], auto: "graph", depth: false },
+  frontier: { type: "List[Node]", modes: ["auto", "array cells"], auto: "array cells", depth: true },
+  best_cost: { type: "Dict[str, int]", modes: ["auto", "table"], auto: "table", depth: true },
+  path: { type: "List[str]", modes: ["auto", "array cells"], auto: "array cells", depth: true },
+  current: { type: "Node", modes: ["auto", "table"], auto: "table", depth: true },
+  child: { type: "Node", modes: ["auto", "table"], auto: "table", depth: true },
+  'best_cost["P"]': { type: "int", modes: ["auto"], auto: "value", depth: false, of: "best_cost" },
+};
+const ALL_MODES = ["auto", "array cells", "bar", "line", "table", "graph"];
+const COLORS = ["#64748b", "#2563eb", "#16a34a", "#dc2626", "#9333ea"];
+const cfg = {}; Object.keys(VARS).forEach((k) => cfg[k] = { mode: "auto", depth: 2, color: COLORS[0] });
+let watched = ["graph", "frontier"], selected = "frontier";
+const $ = (id) => document.getElementById(id);
+const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+function hlLine(t){
+  let s = esc(t).replace(/("[^"]*")/g, '<span class="str">$1</span>').replace(/\b(while|for|in|if|break|lambda)\b/g, '<span class="kw">$1</span>').replace(/\b(\d+)\b/g, '<span class="num">$1</span>');
+  return s.replace(/(?<!\.)\b(graph|search_tree|frontier|best_cost|path|current|child)\b(?![^<]*>)/g, (m) => `<span class="id${watched.includes(m) ? " w" : ""}" data-n="${m}">${m}</span>`);
+}
+function renderCode(){ $("code").innerHTML = CODE.map((t, i) => `<div class="ln"><span class="n">${i + 1}</span><span>${hlLine(t) || "&nbsp;"}</span></div>`).join("");
+  document.querySelectorAll(".id").forEach((e) => e.onclick = () => { if (document.body.classList.contains("sel")) add(e.dataset.n); }); }
+function renderChips(fresh){
+  $("chips").innerHTML = "";
+  watched.forEach((n) => { const d = document.createElement("div"); d.className = "chip" + (n === selected ? " on" : "") + (n === fresh ? " new" : "");
+    d.innerHTML = `<span>${esc(n)}</span><button title="settings">⚙</button><button class="x" title="remove">✕</button>`;
+    d.children[1].onclick = () => { selected = n; render(); };
+    d.children[2].onclick = () => { watched = watched.filter((x) => x !== n); if (selected === n) selected = watched[0] || null; render(); };
+    $("chips").append(d); });
+  if (!watched.length) $("chips").innerHTML = '<span class="empty">No variables yet</span>';
+}
+function add(n, viaExpr){
+  if (!VARS[n]) { $("hint").innerHTML = `<span style="color:var(--red)">no variable matches “${esc(n)}”</span>`; return; }
+  if (!watched.includes(n)) watched.push(n);
+  selected = n; render(n);
+  $("hint").innerHTML = viaExpr && VARS[n].of ? `matches <b>${VARS[n].of}</b> · watches one entry` : `added <b>${esc(n)}</b>`;
+}
+$("add").onclick = () => add(($("expr").value.trim() || 'best_cost["P"]').replace(/'/g, '"'), true);
+$("expr").onkeydown = (e) => { if (e.key === "Enter") $("add").click(); };
+$("selSw").onclick = () => { document.body.classList.toggle("sel"); };
+function nodeTable(n, c){ return V.table(n, { color: c }); }
+function preview(n){
+  const c = cfg[n], v = VARS[n], mode = c.mode === "auto" ? v.auto : c.mode, col = c.color, d = c.depth;
+  $("pInfo").textContent = (c.mode === "auto" ? "auto → " : "") + mode + (v.depth ? ` · depth ${d}` : "");
+  if (n === "graph" || n === "search_tree") {
+    const nodes = n === "graph" ? { S: [40, 90], R: [150, 30], F: [150, 150], P: [270, 60], B: [380, 110] } : { S: [150, 30], R: [80, 120], F: [220, 120], P: [80, 210] };
+    const edges = n === "graph" ? [["S", "R", 1], ["S", "F", 2], ["R", "P", 2], ["F", "B", 3], ["P", "B", 1]] : [["S", "R", 1], ["S", "F", 2], ["R", "P", 2]];
+    return V.graph(nodes, edges, { color: col, hl: ["S"] });
+  }
+  if (n === "frontier") {
+    if (d <= 1) return V.array(NODES.map(() => "Node"), { color: col });
+    // depth 2: each item expands into its fields
+    const parts = NODES.map((x) => V.table(x, { color: col })); let X = 10, body = "";
+    parts.forEach((p, i) => { const w = +p.match(/width="([\d.]+)"/)[1], h = +p.match(/height="([\d.]+)"/)[1];
+      body += `<rect x="${X - 6}" y="4" width="${w + 12}" height="${h + 8}" fill="none" stroke="${col}" stroke-width="2"/><g transform="translate(${X},8)">${p.replace(/^<svg[^>]*>|<\/svg>$/g, "")}</g><text x="${X + w / 2}" y="${h + 30}" text-anchor="middle" font-size="15" fill="#dc2626">${i}</text>`; X += w + 12; });
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${X + 4} 150" width="${X + 4}" height="150" font-family="-apple-system,Segoe UI,Arial,sans-serif">${body}</svg>`;
+  }
+  if (n === "best_cost") return V.table({ S: 0, R: 1, F: 2, P: 3 }, { color: col });
+  if (n === "path") return V.array([], { color: col }).replace("</svg>", '<text x="10" y="40" font-size="16" fill="#9ca3af">[ ] (empty until the goal)</text></svg>');
+  if (n === "current" || n === "child") return d <= 0 ? V.value("Node", { color: col }) : V.table(n === "current" ? { state: "S", g: 0, h: 3, f: 3 } : NODES[0], { color: col });
+  if (n === 'best_cost["P"]') return V.value(3, { color: col });
+}
+function renderDrawer(){
+  const n = selected;
+  if (!n) { $("dName").textContent = "—"; $("dType").textContent = ""; $("modes").innerHTML = ""; $("pv").innerHTML = ""; return; }
+  const v = VARS[n], c = cfg[n];
+  $("dName").textContent = n; $("dType").textContent = v.type;
+  $("modes").innerHTML = "";
+  ALL_MODES.forEach((m) => { const b = document.createElement("button"); b.textContent = m; b.disabled = !v.modes.includes(m); b.className = c.mode === m ? "on" : ""; b.onclick = () => { c.mode = m; renderDrawer(); }; $("modes").append(b); });
+  $("dv").textContent = v.depth ? c.depth : "–";
+  $("dm").disabled = $("dp").disabled = !v.depth;
+  $("sw").innerHTML = "";
+  COLORS.forEach((col) => { const b = document.createElement("button"); b.style.background = col; b.className = c.color === col ? "on" : ""; b.onclick = () => { c.color = col; renderDrawer(); }; $("sw").append(b); });
+  V.fit($("pv"), preview(n), 1.7);
+}
+$("dm").onclick = () => { const c = cfg[selected]; c.depth = Math.max(0, c.depth - 1); renderDrawer(); };
+$("dp").onclick = () => { const c = cfg[selected]; c.depth = Math.min(3, c.depth + 1); renderDrawer(); };
+function render(fresh){ renderCode(); renderChips(fresh); renderDrawer(); }
+render();
+</script>
+</body></html>

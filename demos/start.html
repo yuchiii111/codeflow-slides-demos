@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Start a Project</title>
+<link rel="stylesheet" href="cf.css">
+<style>
+ body{background:var(--page);display:flex;flex-direction:column}
+ .bar{height:56px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 22px;background:#fff;border-bottom:1px solid var(--line)}
+ .logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px}
+ .logo i{width:32px;height:32px;border-radius:8px;background:var(--blue);color:#fff;font-style:normal;font-size:13px;display:grid;place-items:center}
+ .bar .right{display:flex;gap:10px}
+ main{flex:1;display:grid;grid-template-columns:330px 1fr;gap:18px;padding:18px 22px;min-height:0}
+ .entries{display:flex;flex-direction:column;gap:14px;min-height:0}
+ .entry{all:unset;box-sizing:border-box;cursor:pointer;background:#fff;border:2px solid var(--line);border-radius:14px;padding:16px 18px;display:flex;gap:14px;align-items:flex-start;transition:all .15s}
+ .entry:hover{border-color:var(--blue-line)}
+ .entry.on{border-color:var(--blue);background:var(--blue-soft)}
+ .entry .ic{width:44px;height:44px;border-radius:10px;background:#f3f4f6;display:grid;place-items:center;flex:none;font-size:22px}
+ .entry.on .ic{background:#fff}
+ .entry h3{margin:0 0 4px;font-size:20px}
+ .entry p{margin:0;color:var(--muted);font-size:15px;line-height:1.4}
+ .settings{position:relative;margin-top:auto}
+ .settings > button{width:100%;text-align:left;background:#fff;border:1px dashed var(--line2);border-radius:12px;padding:11px 14px;font-size:15px;color:#374151;display:flex;justify-content:space-between;align-items:center}
+ .settings > button:hover{border-color:var(--blue);color:var(--blue)}
+ .pop{position:absolute;left:0;bottom:calc(100% + 8px);width:420px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 32px rgba(15,23,42,.16);padding:14px 18px;display:none;z-index:5}
+ .pop.on{display:block}
+ .pop h4{margin:0 0 8px;font-size:17px}
+ .pop .row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f1f2f4;font-size:15px}
+ .pop .row:last-of-type{border-bottom:0}
+ .pop .row b{font-family:var(--mono);font-weight:500;font-size:14px;background:#f3f4f6;border-radius:6px;padding:2px 8px}
+ .pop .note{margin-top:8px;font-size:14px;color:var(--green)}
+ .right-pane{min-height:0;display:flex;flex-direction:column}
+ .lib{flex:1;display:flex;flex-direction:column;min-height:0}
+ .lib-h{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line)}
+ .lib-h h2{margin:0;font-size:20px;flex:none}
+ .search{flex:1;max-width:280px;border:1px solid var(--line2);border-radius:8px;padding:7px 12px;font:inherit;font-size:15px}
+ .topics{display:flex;flex-wrap:wrap;gap:8px;padding:12px 18px 4px}
+ .topics button{border:1px solid var(--line2);background:#fff;border-radius:999px;padding:5px 12px;font-size:14.5px}
+ .topics button span{color:var(--faint);margin-left:4px}
+ .topics button.on{background:var(--blue);border-color:var(--blue);color:#fff}
+ .topics button.on span{color:#dbeafe}
+ .grid{flex:1;overflow-y:auto;padding:10px 18px 18px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;align-content:start}
+ .ex{border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;background:#fff;transition:all .15s;cursor:pointer}
+ .ex:hover{border-color:var(--blue-line);box-shadow:0 4px 14px rgba(22,119,255,.08)}
+ .ex.sel{border-color:var(--blue);background:var(--blue-soft)}
+ .ex h5{margin:0;font-size:16px}
+ .ex p{margin:0;font-size:13.5px;color:var(--muted);line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:36px}
+ .ex .tags{display:flex;gap:5px;flex-wrap:wrap}
+ .grid::-webkit-scrollbar{width:10px}.grid::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:6px}
+ .toast{position:absolute;right:30px;bottom:26px;background:#111827;color:#fff;border-radius:10px;padding:10px 16px;font-size:15px;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none}
+ .toast.on{opacity:1;transform:none}
+ .blank{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:16px;min-height:0}
+ .blank .code{height:100%}
+ .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--faint);gap:8px;font-size:16px;border:1px dashed var(--line2);border-radius:12px}
+ .hidden{display:none!important}
+</style></head>
+<body>
+<div class="bar">
+  <div class="logo"><i>CF</i>CodeFlow</div>
+  <div class="right"><button class="btn" id="bNew">New project</button><button class="btn on" id="bCol">Collections</button></div>
+</div>
+<main>
+  <div class="entries">
+    <button class="entry" id="eNew"><div class="ic">＋</div><div><h3>New project</h3><p>Blank editor for your own code</p></div></button>
+    <button class="entry on" id="eCol"><div class="ic">▦</div><div><h3>Collections</h3><p><b id="nEx">69</b> examples, 9 topics</p></div></button>
+    <div class="settings">
+      <div class="pop" id="pop">
+        <h4>Project settings</h4>
+        <div class="row">Step limit<b>128</b></div>
+        <div class="row">Structure expansion depth<b>3</b></div>
+        <div class="row">Max visible items per variable<b>50</b></div>
+        <div class="row">Default view per data type<b>list → array cells</b></div>
+        <div class="row">Custom converters · packages<b>optional</b></div>
+        <div class="note">✓ Defaults work for most code</div>
+      </div>
+      <button id="bSet"><span>⚙&nbsp; Project settings</span><span class="muted">defaults ▴</span></button>
+    </div>
+  </div>
+  <div class="card right-pane">
+    <div class="lib" id="lib">
+      <div class="lib-h"><h2>Collections</h2><input class="search" id="q" placeholder="Search examples"></div>
+      <div class="topics" id="topics"></div>
+      <div class="grid" id="grid"></div>
+    </div>
+    <div class="lib hidden" id="blankPane">
+      <div class="lib-h"><h2>Untitled project</h2><span class="muted">empty, write or paste code</span></div>
+      <div class="blank">
+        <div class="code" style="padding:12px 0"><div class="ln"><span class="n">1</span><span class="cm">|</span></div></div>
+        <div class="empty"><div style="font-size:34px">◫</div>Add variables, then press Play</div>
+      </div>
+    </div>
+    <div class="toast" id="toast"></div>
+  </div>
+</main>
+<script>
+const EX = [{"t": "Bubble Sort Trace", "d": "Classic bubble sort trace over an array view.", "tags": ["algorithm", "sorting", "array"], "topic": "Arrays & Sorting"}, {"t": "Selection Sort Trace", "d": "Selection sort over an array with the active indices exposed.", "tags": ["algorithm", "sorting", "array"], "topic": "Arrays & Sorting"}, {"t": "Insertion Sort Trace", "d": "Insertion sort with the current key and index movements.", "tags": ["algorithm", "sorting", "array"], "topic": "Arrays & Sorting"}, {"t": "Merge Sort Trace", "d": "Merge sort with the current recursive range, merge snapshots, and call stack exposed.", "tags": ["algorithm", "sorting", "array"], "topic": "Arrays & Sorting"}, {"t": "Quick Sort Trace", "d": "In-place quick sort with the current recursive range, pivot, and call stack exposed.", "tags": ["algorithm", "sorting", "array"], "topic": "Arrays & Sorting"}, {"t": "Counting Sort Trace", "d": "Counting sort with explicit count and output arrays.", "tags": ["algorithm", "sorting", "array"], "topic": "Arrays & Sorting"}, {"t": "Radix Sort Trace", "d": "Least-significant-digit radix sort over a small integer array.", "tags": ["algorithm", "sorting", "array"], "topic": "Arrays & Sorting"}, {"t": "Binary Search Trace", "d": "Classic binary search over a sorted array with moving bounds.", "tags": ["algorithm", "search", "array"], "topic": "Search & Game AI"}, {"t": "Array Operations Trace", "d": "Basic array insert, update, delete, and search-style operations.", "tags": ["array", "data structure"], "topic": "Arrays & Sorting"}, {"t": "Array Cells", "d": "Array view with simple indexed updates.", "tags": ["array", "data structure", "intro"], "topic": "Arrays & Sorting"}, {"t": "Bar", "d": "Bar view for numeric sequences.", "tags": ["array", "bar", "intro"], "topic": "Arrays & Sorting"}, {"t": "Line", "d": "Line view for numeric sequences.", "tags": ["array", "line", "intro"], "topic": "Arrays & Sorting"}, {"t": "Matrix", "d": "Matrix view with aligned cells.", "tags": ["matrix", "array", "intro"], "topic": "Arrays & Sorting"}, {"t": "Linked List", "d": "Linked list view with insert/delete example.", "tags": ["linked list", "linear structure", "data structure"], "topic": "Linear Structures & Maps"}, {"t": "Hash Table", "d": "Hash table view with bucket chains.", "tags": ["hash table", "map", "data structure"], "topic": "Linear Structures & Maps"}, {"t": "Linear Probing Hash Table", "d": "Open-addressing insertion trace with a compact probe log.", "tags": ["hash table", "map", "array"], "topic": "Linear Structures & Maps"}, {"t": "Quadratic Probing Hash Table", "d": "Open-addressing insertion with a quadratic probe sequence.", "tags": ["hash table", "map", "array"], "topic": "Linear Structures & Maps"}, {"t": "Table", "d": "Table view for dict values.", "tags": ["table", "dict", "map"], "topic": "Linear Structures & Maps"}, {"t": "Breadth-First Search (BFS)", "d": "Breadth-first tree search with an adjacency graph, an expanding search tree, and a FIFO frontier.", "tags": ["algorithm", "graph", "queue"], "topic": "Graphs & Graph Algorithms"}, {"t": "Nested Dict / List", "d": "Deeply nested payload to exercise recursive outer-node rendering.", "tags": ["nested", "dict", "list"], "topic": "Linear Structures & Maps"}, {"t": "Heap Dual", "d": "Dual heap view with array + tree.", "tags": ["heap"], "topic": "Trees & Range Structures"}, {"t": "Heap Insert Trace", "d": "Shows a max-heap growing as new values bubble upward, with the active node and parent exposed.", "tags": ["heap", "tree", "data structure"], "topic": "Trees & Range Structures"}, {"t": "Heap Extract Trace", "d": "Shows repeated max extraction from a binary heap.", "tags": ["heap", "tree", "data structure"], "topic": "Trees & Range Structures"}, {"t": "Tree", "d": "Tree view using nested children.", "tags": ["tree", "data structure", "intro"], "topic": "Trees & Range Structures"}, {"t": "Bitmask Builder", "d": "Builds a bitmask step by step and records the selected positions.", "tags": ["algorithm", "bitmask", "table"], "topic": "Linear Structures & Maps"}, {"t": "BST Insert Trace", "d": "Builds a binary search tree through real insert operations.", "tags": ["tree", "bst", "data structure"], "topic": "Trees & Range Structures"}, {"t": "BST Search Trace", "d": "Walks a binary search tree while recording the visited path.", "tags": ["tree", "bst", "search"], "topic": "Search & Game AI"}, {"t": "BST Delete Trace", "d": "Deletes a BST node with two children and keeps a focus trace.", "tags": ["tree", "bst", "delete"], "topic": "Trees & Range Structures"}, {"t": "AVL Rotation Trace", "d": "Shows AVL balancing through real insertions and rotations.", "tags": ["tree", "avl", "rotation"], "topic": "Trees & Range Structures"}, {"t": "Union-Find Trace", "d": "Shows parent and rank updates across real union operations.", "tags": ["union-find", "graph", "data structure"], "topic": "Graphs & Graph Algorithms"}, {"t": "Fenwick Tree Trace", "d": "Builds a Fenwick tree and records a few prefix sums.", "tags": ["fenwick", "range query", "tree"], "topic": "Trees & Range Structures"}, {"t": "Segment Tree Trace", "d": "Builds a segment tree and then applies point updates.", "tags": ["segment tree", "range query", "tree"], "topic": "Trees & Range Structures"}, {"t": "Graph", "d": "Graph view built incrementally from node and edge updates.", "tags": ["graph", "data structure", "intro"], "topic": "Graphs & Graph Algorithms"}, {"t": "Nested Graph Mapping", "d": "Graph mapping with nested node payloads added over a real build sequence.", "tags": ["graph", "nested", "data structure"], "topic": "Graphs & Graph Algorithms"}, {"t": "Recursion Call Log", "d": "Simple recursive Fibonacci with an explicit call/return log.", "tags": ["recursion", "call trace", "algorithm"], "topic": "Recursion"}, {"t": "Coin Change DP", "d": "Bottom-up dynamic programming trace for the minimum coin-change problem.", "tags": ["recursion", "dynamic programming", "algorithm"], "topic": "Recursion"}, {"t": "Depth-First Search (DFS)", "d": "Depth-first search with a Graph problem, an expanding Tree, and a LIFO frontier.", "tags": ["graph", "dfs", "stack"], "topic": "Graphs & Graph Algorithms"}, {"t": "Topological Sort Trace", "d": "Tracks in-degrees, queue state, and output order for a DAG.", "tags": ["graph", "traversal", "algorithm"], "topic": "Graphs & Graph Algorithms"}, {"t": "Connected Components Trace", "d": "Builds connected components while tracking the visited set.", "tags": ["graph", "traversal", "algorithm"], "topic": "Graphs & Graph Algorithms"}, {"t": "A* Search", "d": "A* graph search on the lecture's Romania problem graph, ordered by f(n) = g(n) + h(n).", "tags": ["search", "heuristic", "graph"], "topic": "Search & Game AI"}, {"t": "Uniform-Cost Search", "d": "Uniform-cost tree search on the lecture's Romania problem graph, with a priority-queue frontier ordered by path cost g(n).", "tags": ["search", "uniform cost", "graph"], "topic": "Search & Game AI"}, {"t": "Greedy Best-First Search", "d": "Greedy best-first tree search on the lecture's Romania problem graph, ordered by h(n) only.", "tags": ["search", "greedy", "heuristic"], "topic": "Search & Game AI"}, {"t": "Depth-Limited Search (DLS)", "d": "Depth-limited tree search on the lecture's Romania problem graph, with depth limit l = 2.", "tags": ["search", "depth-limited", "dfs"], "topic": "Search & Game AI"}, {"t": "Iterative Deepening Search (IDS)", "d": "Iterative deepening tree search on the lecture's Romania problem graph, trying depth limits 0, 1, and 2.", "tags": ["search", "iterative deepening", "dfs"], "topic": "Search & Game AI"}, {"t": "Hill Climbing Algorithm", "d": "Steepest-ascent hill climbing for 4-Queens: retain a growing tree while showing the three strongest moves from each expanded state.", "tags": ["local search", "hill climbing", "algorithm"], "topic": "Search & Game AI"}, {"t": "Bidirectional Search", "d": "Bidirectional search with two frontiers over a problem graph and a merged search tree.", "tags": ["search", "bidirectional", "graph"], "topic": "Search & Game AI"}, {"t": "Beam Search", "d": "Beam search with a problem graph, an evolving search tree, and a frontier capped by beam width.", "tags": ["search", "beam search", "heuristic"], "topic": "Search & Game AI"}, {"t": "Simulated Annealing", "d": "Probabilistic local search that accepts worse successors with probability exp(delta / temperature) while cooling.", "tags": ["local search", "simulated annealing", "heuristic"], "topic": "Search & Game AI"}, {"t": "Minimax", "d": "Minimax on a near-terminal Tic-Tac-Toe position: X maximizes and O minimizes utility discovered at terminal boards.", "tags": ["adversarial", "minimax", "tree"], "topic": "Search & Game AI"}, {"t": "Alpha-Beta Pruning", "d": "Minimax with alpha-beta pruning, including cut-off events in the trace.", "tags": ["adversarial", "alpha-beta", "minimax"], "topic": "Search & Game AI"}, {"t": "Kruskal MST", "d": "Minimum spanning tree growth over a small undirected graph.", "tags": ["graph", "mst", "kruskal"], "topic": "Graphs & Graph Algorithms"}, {"t": "Prim MST", "d": "Minimum spanning tree growth from a start node using the best frontier edge.", "tags": ["graph", "mst", "prim"], "topic": "Graphs & Graph Algorithms"}, {"t": "Dijkstra Distances", "d": "Single-source shortest paths with distance-table updates.", "tags": ["graph", "shortest path", "dijkstra"], "topic": "Graphs & Graph Algorithms"}, {"t": "Unweighted Shortest Path", "d": "Breadth-first shortest-path distances and parent reconstruction on an unweighted graph.", "tags": ["graph", "shortest path", "traversal"], "topic": "Graphs & Graph Algorithms"}, {"t": "Bellman-Ford Relaxation", "d": "Shortest-path relaxation rounds over a weighted directed graph.", "tags": ["graph", "shortest path", "bellman-ford"], "topic": "Graphs & Graph Algorithms"}, {"t": "Negative Cycle Detection", "d": "Bellman-Ford style relaxation that exposes a final negative-cycle check.", "tags": ["graph", "shortest path", "bellman-ford"], "topic": "Graphs & Graph Algorithms"}, {"t": "Floyd Cycle Pointers", "d": "Tortoise and hare pointer movement through a linked cycle.", "tags": ["cycle", "pointer", "algorithm"], "topic": "Graphs & Graph Algorithms"}, {"t": "Suffix Array Basics", "d": "Builds and sorts suffixes for a compact string example.", "tags": ["string", "suffix array", "algorithm"], "topic": "Strings"}, {"t": "Suffix Array LCP", "d": "Computes adjacent longest-common-prefix values after suffix-array ordering.", "tags": ["string", "suffix array", "algorithm"], "topic": "Strings"}, {"t": "KMP Prefix Table", "d": "Builds the prefix-function table used by Knuth-Morris-Pratt string matching.", "tags": ["string", "algorithm"], "topic": "Strings"}, {"t": "LCS DP Table", "d": "Builds the dynamic-programming table for longest common subsequence.", "tags": ["string", "dynamic programming", "algorithm"], "topic": "Strings"}, {"t": "Trie Insert Search", "d": "Trie growth and a simple search path summary for inserted words.", "tags": ["string", "tree", "algorithm"], "topic": "Strings"}, {"t": "Decision Tree Learning", "d": "Decision tree learning on the lecture's hiring dataset, choosing splits by information gain.", "tags": ["machine learning", "decision tree", "algorithm"], "topic": "Machine Learning"}, {"t": "Decision Tree Pruning: Max Depth Limit", "d": "Applies a max-depth constraint and stops deeper splits once the limit is reached.", "tags": ["machine learning", "decision tree", "pruning"], "topic": "Machine Learning"}, {"t": "Decision Tree Pruning: Min Samples per Leaf", "d": "Blocks leaves that would end up below a minimum sample threshold.", "tags": ["machine learning", "decision tree", "pruning"], "topic": "Machine Learning"}, {"t": "Linear Regression", "d": "Fits a line to fixed training points with gradient descent.", "tags": ["machine learning", "linear regression", "regression"], "topic": "Machine Learning"}, {"t": "Binary Logistic Regression: Engine Failure", "d": "Lecture 6's Engine Failure data, fitted with a sigmoid and binary cross-entropy gradient descent.", "tags": ["machine learning", "logistic regression", "binary classification"], "topic": "Machine Learning"}, {"t": "Logistic Regression: Animal Prediction", "d": "Learns one logistic decision boundary that separates rabbits from the cat and dog examples.", "tags": ["machine learning", "logistic regression", "binary classification"], "topic": "Machine Learning"}, {"t": "Image", "d": "Image view requires a browser-accessible asset path; this example is a placeholder.", "tags": ["image", "asset required", "special"], "topic": "Special Media"}];
+const TOPICS = ["All topics","Arrays & Sorting","Linear Structures & Maps","Trees & Range Structures","Graphs & Graph Algorithms","Search & Game AI","Machine Learning","Recursion","Strings","Special Media"];
+let topic = "All topics", q = "";
+const $ = (id) => document.getElementById(id);
+$("nEx").textContent = EX.length;
+function renderTopics(){
+  $("topics").innerHTML = "";
+  TOPICS.forEach((t) => { const n = t === "All topics" ? EX.length : EX.filter((e) => e.topic === t).length; if (!n) return;
+    const b = document.createElement("button"); b.className = t === topic ? "on" : ""; b.innerHTML = `${t}<span>${n}</span>`; b.onclick = () => { topic = t; renderTopics(); renderGrid(); }; $("topics").append(b); });
+}
+function renderGrid(){
+  const list = EX.filter((e) => (topic === "All topics" || e.topic === topic) && (!q || (e.t + " " + e.d + " " + e.tags.join(" ")).toLowerCase().includes(q)));
+  $("grid").innerHTML = ""; $("grid").scrollTop = 0;
+  list.forEach((e) => { const d = document.createElement("div"); d.className = "ex";
+    d.innerHTML = `<h5>${e.t}</h5><p>${e.d}</p><div class="tags">${e.tags.map((t) => `<span class="tag">${t}</span>`).join("")}</div>`;
+    d.onclick = () => { document.querySelectorAll(".ex.sel").forEach((x) => x.classList.remove("sel")); d.classList.add("sel"); toast(`“${e.t}” opens with code, variables and views already set`); };
+    $("grid").append(d); });
+}
+let tt; function toast(t){ $("toast").textContent = t; $("toast").classList.add("on"); clearTimeout(tt); tt = setTimeout(() => $("toast").classList.remove("on"), 2600); }
+function mode(m){
+  $("eNew").classList.toggle("on", m === "new"); $("eCol").classList.toggle("on", m === "col");
+  $("bNew").classList.toggle("on", m === "new"); $("bCol").classList.toggle("on", m === "col");
+  $("lib").classList.toggle("hidden", m !== "col"); $("blankPane").classList.toggle("hidden", m !== "new");
+}
+$("eNew").onclick = $("bNew").onclick = () => mode("new");
+$("eCol").onclick = $("bCol").onclick = () => mode("col");
+$("bSet").onclick = (ev) => { ev.stopPropagation(); $("pop").classList.toggle("on"); };
+document.addEventListener("click", (ev) => { if (!$("pop").contains(ev.target)) $("pop").classList.remove("on"); });
+$("q").oninput = (ev) => { q = ev.target.value.trim().toLowerCase(); renderGrid(); };
+renderTopics(); renderGrid();
+</script>
+</body></html>

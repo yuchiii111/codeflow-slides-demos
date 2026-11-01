@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Choosing a View</title>
+<link rel="stylesheet" href="cf.css">
+<script src="views.js"></script>
+<style>
+ body{background:var(--page);display:grid;grid-template-columns:400px 1fr;gap:16px;padding:16px 20px}
+ .list{display:flex;flex-direction:column;min-height:0}
+ .rows{flex:1;overflow:auto;padding:8px}
+ .row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;border:1.5px solid transparent}
+ .row:hover{background:#f9fafb}
+ .row.on{background:var(--blue-soft);border-color:var(--blue)}
+ .row .nm{font-family:var(--mono);font-size:16px;font-weight:600}
+ .row .type{white-space:nowrap}
+ .row .val{font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:215px}
+ .view{display:flex;flex-direction:column;min-height:0}
+ .bar2{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+ .bar2 .lbl{font-size:15px;color:var(--muted);font-weight:500}
+ .opts{display:flex;gap:8px;flex-wrap:wrap}
+ .opts button{border:1px solid var(--line2);background:#fff;border-radius:9px;padding:7px 14px;font-size:15.5px;transition:all .15s}
+ .opts button:hover{border-color:var(--blue);color:var(--blue)}
+ .opts button.on{background:var(--blue);border-color:var(--blue);color:#fff}
+ .opts button small{opacity:.75;margin-left:4px}
+ .stage{flex:1;display:flex;align-items:center;justify-content:center;padding:16px;min-height:0;position:relative}
+ #stage{width:100%;height:100%;display:flex;align-items:center;justify-content:center}
+ .stage svg{animation:fade .35s}
+ @keyframes fade{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+ .note{position:absolute;left:18px;bottom:12px;font-size:14px;color:var(--muted)}
+ .count{font-size:14px;color:var(--muted)}
+</style></head>
+<body>
+<div class="card list">
+  <div class="card-h">Variables <span class="count">pick one</span></div>
+  <div class="rows" id="rows"></div>
+</div>
+<div class="card view">
+  <div class="bar2"><span class="lbl">Display mode</span><div class="opts" id="opts"></div></div>
+  <div class="stage"><div id="stage"></div><div class="note" id="note"></div></div>
+</div>
+<script>
+const V = CFV;
+const scores = [7, 3, 5, 1, 9];
+const points = [[1, 2], [2, 3], [3, 5], [4, 4], [5, 6]];
+const VARS = [
+  { n: "scores", t: "List[int]", v: "[7, 3, 5, 1, 9]", modes: { "array cells": () => V.array(scores), bar: () => V.bar(scores, { w: 460, h: 270 }), line: () => V.line(scores, { w: 460, h: 270 }), scatter: () => V.scatter(scores, { w: 460, h: 270 }), heap: () => V.heap([9, 7, 5, 1, 3]) }, auto: "array cells", note: "line / scatter: x = index" },
+  { n: "points", t: "List[(x, y)]", v: "[(1, 2), (2, 3), (3, 5), …]", modes: { matrix: () => V.matrix(points), line: () => V.line(points, { w: 460, h: 270 }), scatter: () => V.scatter(points, { w: 460, h: 270 }) }, auto: "matrix", note: "line and scatter can be overlaid in the workspace" },
+  { n: "grid", t: "List[List[int]]", v: "[[1, 2, 3], [4, 5, 6]]", modes: { matrix: () => V.matrix([[1, 2, 3], [4, 5, 6]]) }, auto: "matrix" },
+  { n: "record", t: "Dict[str, Any]", v: '{"state": "B", "g": 5, "h": 0}', modes: { table: () => V.table({ state: "B", g: 5, h: 0, f: 5 }) }, auto: "table" },
+  { n: "linked", t: "Node · .next", v: 'Node("A", Node("B", …))', modes: { "linked list": () => V.linked(["A", "B", "C"]) }, auto: "linked list" },
+  { n: "buckets", t: "List[List[(k,v)]]", v: '[[("a", 1)], [], [("c", 3), …]]', modes: { "hash table": () => V.hash([[["a", 1]], [], [["c", 3], ["k", 11]]]) }, auto: "hash table" },
+  { n: "tree", t: "TreeNode", v: "TreeNode(8, TreeNode(3, …), …)", modes: { tree: () => V.tree(["8", ["3", ["1"], ["6"]], ["10", null, ["14"]]]) }, auto: "tree" },
+  { n: "graph", t: "Graph", v: 'Graph({"A": {"B": 1, …}})', modes: { graph: () => V.graph({ A: [40, 110], B: [170, 40], C: [170, 180], D: [300, 110] }, [["A", "B", 1], ["A", "C", 2], ["B", "D", 3], ["C", "D", 1], ["B", "C", 1]]) }, auto: "graph" },
+];
+let cur = VARS[0], mode = "auto";
+const $ = (id) => document.getElementById(id);
+function rows(){ $("rows").innerHTML = ""; VARS.forEach((x) => { const d = document.createElement("div"); d.className = "row" + (x === cur ? " on" : "");
+  d.innerHTML = `<div><div class="nm">${x.n}</div><div class="val">${x.v.replace(/</g, "&lt;")}</div></div><span class="type">${x.t}</span>`; d.onclick = () => { cur = x; mode = "auto"; render(); }; $("rows").append(d); }); }
+function opts(){ $("opts").innerHTML = ""; ["auto", ...Object.keys(cur.modes)].forEach((m) => { const b = document.createElement("button"); b.className = m === mode ? "on" : "";
+  b.innerHTML = m === "auto" ? `auto<small>→ ${cur.auto}</small>` : m; b.onclick = () => { mode = m; render(); }; $("opts").append(b); }); }
+function render(){ rows(); opts(); const m = mode === "auto" ? cur.auto : mode; V.fit($("stage"), cur.modes[m](), 2.2); $("note").textContent = cur.note || ""; }
+window.addEventListener("resize", render);
+render();
+</script>
+</body></html>

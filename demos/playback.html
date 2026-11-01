@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Playback</title>
+<link rel="stylesheet" href="cf.css">
+<style>
+ body{background:#fff;display:flex;flex-direction:column;gap:14px;padding:14px 16px}
+ .code{font-size:14.5px;line-height:1.7;flex:none}
+ .stage{flex:1;position:relative;border:1px solid var(--line);border-radius:12px;min-height:0;display:flex;flex-direction:column}
+ .stage .h{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid var(--line);font-weight:600;font-size:16px}
+ .stage .h span{font-weight:400;color:var(--muted);font-size:14px}
+ .arr{position:relative;flex:1;margin:0 auto;width:360px}
+ .cell{position:absolute;top:50%;width:80px;height:80px;margin-top:-52px;border:2.5px solid #64748b;background:#fff;display:grid;place-items:center;font-size:32px;font-weight:500}
+ .cell.cmp{border-color:var(--orange);background:#fff7e6;border-width:3.5px}
+ .anim .cell{transition:left .55s cubic-bezier(.4,.1,.2,1),background .25s,border-color .25s}
+ .flash{animation:flash .35s}
+ @keyframes flash{0%{opacity:0}100%{opacity:1}}
+ .idx{position:absolute;top:50%;margin-top:40px;width:80px;text-align:center;color:var(--red);font-size:18px}
+ .ctl{display:flex;align-items:center;gap:8px;flex:none}
+ .ctl .lab{font-weight:600;font-size:16px;margin:0 6px;min-width:96px}
+ .ctl .sp{flex:1}
+ .tg{display:flex;align-items:center;gap:8px;font-size:15px;cursor:pointer;user-select:none}
+ .tg i{width:40px;height:22px;border-radius:12px;background:#d1d5db;position:relative;transition:.15s}
+ .tg i::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.15s}
+ .tg.on i{background:var(--blue)} .tg.on i::after{left:21px}
+</style></head>
+<body>
+<div class="code" id="code"></div>
+<div class="stage"><div class="h">data <span id="what"></span></div><div class="arr anim" id="arr"></div></div>
+<div class="ctl"><button class="btn" id="prev">←</button><button class="btn primary" id="play">▶ Play</button><button class="btn" id="next">→</button><span class="lab" id="lab"></span><span class="sp"></span><label class="tg on" id="tg"><i></i>Match by id</label></div>
+<script>
+const CODE = ["data = [7, 3, 5, 1]", "for i in range(len(data)):", "    for j in range(len(data) - i - 1):", "        if data[j] > data[j+1]:", "            data[j], data[j+1] = data[j+1], data[j]"];
+const ST = []; { const a = [{ id: "a", v: 7 }, { id: "b", v: 3 }, { id: "c", v: 5 }, { id: "d", v: 1 }]; ST.push({ a: a.slice(), line: 0, cmp: [], what: "created" });
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4 - i - 1; j++) { ST.push({ a: a.slice(), line: 3, cmp: [j, j + 1], what: `compare ${a[j].v} > ${a[j + 1].v}` });
+    if (a[j].v > a[j + 1].v) { [a[j], a[j + 1]] = [a[j + 1], a[j]]; ST.push({ a: a.slice(), line: 4, cmp: [j, j + 1], what: `swap → ${a[j].v}, ${a[j + 1].v}` }); } } }
+let k = 0, timer = null, anim = true;
+const $ = (id) => document.getElementById(id), CW = 90;
+const esc = (s) => s.replace(/</g, "&lt;");
+const hl = (t) => esc(t).replace(/\b(for|in|if)\b/g, '<span class="kw">$1</span>').replace(/\b(range|len)\b/g, '<span class="fn">$1</span>').replace(/\b(\d+)\b/g, '<span class="num">$1</span>');
+const cells = {};
+["a", "b", "c", "d"].forEach((id) => { const d = document.createElement("div"); d.className = "cell"; cells[id] = d; $("arr").append(d); });
+for (let i = 0; i < 4; i++) { const d = document.createElement("div"); d.className = "idx"; d.style.left = i * CW + "px"; d.textContent = i; $("arr").append(d); }
+function render(){
+  const s = ST[k];
+  $("code").innerHTML = CODE.map((t, i) => `<div class="ln${i === s.line ? " hl" : ""}"><span class="n">${i + 1}</span><span>${hl(t)}</span></div>`).join("");
+  $("arr").classList.toggle("anim", anim);
+  s.a.forEach((e, i) => { const c = cells[e.id]; c.textContent = e.v; const nl = i * CW + "px"; if (!anim && c.style.left !== nl) { c.classList.remove("flash"); void c.offsetWidth; c.classList.add("flash"); } c.style.left = nl; c.classList.toggle("cmp", s.cmp.includes(i)); });
+  $("lab").textContent = `Step ${k + 1} of ${ST.length}`; $("what").textContent = s.what;
+}
+function go(n){ k = Math.max(0, Math.min(ST.length - 1, n)); render(); }
+$("prev").onclick = () => go(k - 1); $("next").onclick = () => go(k + 1);
+$("play").onclick = () => { if (timer) { clearInterval(timer); timer = null; $("play").textContent = "▶ Play"; return; } if (k >= ST.length - 1) go(0);
+  $("play").textContent = "❚❚ Pause"; timer = setInterval(() => { if (k >= ST.length - 1) { $("play").click(); return; } go(k + 1); }, 900); };
+$("tg").onclick = () => { anim = !anim; $("tg").classList.toggle("on", anim); render(); };
+addEventListener("keydown", (e) => { if (e.key === "ArrowRight") go(k + 1); if (e.key === "ArrowLeft") go(k - 1); });
+render();
+</script>
+</body></html>
