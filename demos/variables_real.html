@@ -4,44 +4,64 @@
 <style>
  html,body{margin:0;height:100%;background:#f5f7fa;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Arial,sans-serif;overflow:hidden}
  body{display:flex;gap:18px;padding:0 12px;align-items:stretch}
- .left{width:800px;flex:none;position:relative;overflow-y:auto;overflow-x:hidden;scroll-behavior:smooth;overscroll-behavior:contain}
+ .left{width:727px;flex:none;position:relative;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain}
  .left::-webkit-scrollbar{width:10px}.left::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:6px}
- .left .cam{position:relative;width:790px}
- .left img{display:block;width:790px}
- .hot{position:absolute;border-radius:10px;cursor:pointer;box-shadow:0 0 0 3px rgba(245,158,11,.9);animation:pulse 1.6s infinite}
- @keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(245,158,11,.9)}50%{box-shadow:0 0 0 7px rgba(245,158,11,.25)}}
+ .stage{position:relative;width:715px}
+ .stage img{display:block;width:715px}
  .right{flex:1;display:flex;align-items:center;justify-content:center;min-width:0}
- .ph{width:100%;max-width:780px;height:470px;flex-direction:column;border:2px dashed #d1d5db;border-radius:14px;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:20px;text-align:center;line-height:1.6}
- .dlg{display:none;width:100%;max-width:798px;border-radius:12px;box-shadow:0 18px 50px rgba(15,23,42,.22);animation:pop .35s}
- @keyframes pop{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
- .reset{position:fixed;right:10px;bottom:8px;border:1px solid #d1d5db;background:#fff;border-radius:8px;font-size:13px;color:#6b7280;padding:3px 9px;cursor:pointer;opacity:.5}
+ .dwrap{position:relative;width:740px;max-width:100%;display:none;animation:pop .3s}
+ .dwrap img{display:block;width:100%;border-radius:10px;box-shadow:0 18px 50px rgba(15,23,42,.22)}
+ @keyframes pop{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+ .hot{position:absolute;cursor:pointer;border-radius:8px}
+ .hot.guide{box-shadow:0 0 0 3px rgba(245,158,11,.9);animation:pulse 1.6s infinite}
+ @keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(245,158,11,.9)}50%{box-shadow:0 0 0 7px rgba(245,158,11,.25)}}
+ .reset{position:fixed;right:10px;bottom:8px;border:1px solid #d1d5db;background:#fff;border-radius:8px;font-size:13px;color:#6b7280;padding:3px 9px;cursor:pointer;opacity:.45}
  .reset:hover{opacity:1}
 </style></head>
 <body>
-<div class="left"><div class="cam" id="cam"><img id="img" src="img/var_s1.png" alt="Code and Variables cards"><div id="hots"></div></div></div>
-<div class="right"><div class="ph" id="ph"><div>Watch settings</div><div style="font-size:16px">opens from the ⚙ of a watched variable</div></div><img class="dlg" id="dlg" src="img/var_dialog.png" alt="Watch settings dialog"></div>
+<div class="left" id="left"><div class="stage"><img id="img" alt="Code and Variables"><div id="hots"></div></div></div>
+<div class="right"><div class="dwrap" id="dwrap"><img id="dimg" alt="Watch settings"><div id="dhots"></div></div></div>
 <button class="reset" id="reset">↺ reset</button>
 <script>
-// state: image, camera offset (px from top), hotspots [x, y, w, h, next]
-const H = () => document.querySelector(".left").clientHeight;
-const S = {
-  s1: { img: "img/var_s1.png", h: 975, cam: "bottom", hots: [[592, 755, 180, 38, "s2"]] },
-  s2: { img: "img/var_s2.png", h: 1070, cam: "top", hots: [[190, 236, 86, 30, "s3"]] },
-  s3: { img: "img/var_s3.png", h: 1070, cam: "bottom", hots: [[614, 886, 46, 44, "dlg"]] },
+// [x, y, w, h, target, guide?]
+const L = {
+  s0:   { img: "img/v_s0.png",   hots: [[549, 627, 95, 33, "s1", 1]] },
+  s1:   { img: "img/v_s1.png",   hots: [[549, 627, 95, 33, "s0"], [552, 660, 158, 30, "sel0", 1], [552, 693, 158, 30, "adv1", 1]] },
+  adv1: { img: "img/v_adv1.png", hots: [[570, 85, 33, 33, "adv2", 1], [611, 85, 33, 33, "s0"]] },
+  adv2: { img: "img/v_adv2.png", hots: [[455, 697, 188, 32, "s0"]] },
+  sel0: { img: "img/v_sel0.png", hots: [[126, 272, 46, 22, "sel1", 1]] },
+  sel1: { img: "img/v_sel1.png", hots: [[126, 314, 74, 22, "sel2", 1]] },
+  sel2: { img: "img/v_sel2.png", hots: [[126, 336, 82, 22, "sel3", 1]] },
+  sel3: { img: "img/v_sel3.png", hots: [[163, 785, 28, 28, "d:graph"], [369, 785, 28, 28, "d:frontier", 1], [575, 785, 28, 28, "d:best_cost"]] },
 };
-let cur = "s1";
-["s1", "s2", "s3"].forEach((k) => { const i = new Image(); i.src = S[k].img; });
-function go(k){
-  if (k === "dlg") { document.getElementById("ph").style.display = "none"; const d = document.getElementById("dlg"); d.style.display = "block"; d.style.animation = "none"; void d.offsetWidth; d.style.animation = ""; document.getElementById("hots").innerHTML = ""; return; }
-  cur = k; const s = S[k];
-  document.getElementById("img").src = s.img;
-  const y = s.cam === "top" ? 0 : Math.max(0, s.h - H());
-  const L = document.querySelector(".left"); setTimeout(() => L.scrollTo({ top: y, behavior: "smooth" }), 60);
-  const hs = document.getElementById("hots"); hs.innerHTML = "";
-  s.hots.forEach(([x, yy, w, h, nx]) => { const d = document.createElement("div"); d.className = "hot"; Object.assign(d.style, { left: x + "px", top: yy + "px", width: w + "px", height: h + "px" }); d.onclick = () => go(nx); hs.append(d); });
+const items = [[31, 176, 204, 42, "d:graph"], [31, 221, 204, 42, "d:frontier"], [31, 267, 204, 42, "d:best_cost"]];
+const close = [[694, 14, 38, 38, "x"], [500, 406, 78, 34, "x"]];
+const D = {
+  graph:       { img: "img/v_dlg_graph.png", h: 368, hots: [...items, [694, 14, 38, 38, "x"], [500, 314, 78, 34, "x"]] },
+  frontier:    { img: "img/v_dlg_frontier.png", h: 460, hots: [...items, ...close, [268, 167, 450, 34, "d:frontier_dd", 1]] },
+  frontier_dd: { img: "img/v_dlg_frontier_dd.png", h: 460, hots: [[270, 208, 444, 68, "d:frontier"], [694, 14, 38, 38, "x"]] },
+  best_cost:   { img: "img/v_dlg_best_cost.png", h: 460, hots: [...items, ...close] },
+};
+Object.values(L).concat(Object.values(D)).forEach((s) => { const i = new Image(); i.src = s.img; });
+const $ = (id) => document.getElementById(id);
+let cur = "s0";
+function mk(box, hots){ box.innerHTML = ""; hots.forEach(([x, y, w, h, t, g]) => { const d = document.createElement("div"); d.className = "hot" + (g ? " guide" : ""); Object.assign(d.style, { left: x + "px", top: y + "px", width: w + "px", height: h + "px" }); d.onclick = (e) => { e.stopPropagation(); act(t); }; box.append(d); }); }
+function show(k){
+  cur = k; const s = L[k]; $("img").src = s.img; mk($("hots"), s.hots);
+  const g = s.hots.find((h) => h[5]) || s.hots[0]; const left = $("left");
+  const want = Math.max(0, Math.min(960 - left.clientHeight, g[1] - left.clientHeight / 2));
+  left.scrollTo({ top: want, behavior: "smooth" });
 }
-document.getElementById("reset").onclick = () => { document.getElementById("dlg").style.display = "none"; document.getElementById("ph").style.display = "flex"; go("s1"); };
-addEventListener("resize", () => go(cur));
-go("s1");
+function dialog(k){
+  const s = D[k], w = $("dwrap"); w.style.display = "block"; $("dimg").src = s.img;
+  const scale = w.clientWidth / 740; const hs = s.hots.map(([x, y, ww, h, t, g]) => [x * scale, y * scale, ww * scale, h * scale, t, g]); mk($("dhots"), hs);
+}
+function act(t){
+  if (t === "x") { $("dwrap").style.display = "none"; return; }
+  if (t.startsWith("d:")) { dialog(t.slice(2)); return; }
+  show(t);
+}
+$("reset").onclick = () => { $("dwrap").style.display = "none"; show("s0"); };
+show("s0");
 </script>
 </body></html>
