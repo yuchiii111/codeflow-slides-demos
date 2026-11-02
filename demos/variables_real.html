@@ -33,19 +33,21 @@ const L = {
   sel0: { img: "img/v_sel0.png", hots: [[126, 272, 46, 22, "sel1", 1], [502, 715, 141, 33, "s0"]] },
   sel1: { img: "img/v_sel1.png", hots: [[126, 314, 74, 22, "sel2", 1], [502, 715, 141, 33, "s0"]] },
   sel2: { img: "img/v_sel2.png", hots: [[126, 336, 82, 22, "sel3", 1], [502, 715, 141, 33, "s0"]] },
-  sel3: { img: "img/v_sel3.png", hots: [[163, 785, 28, 28, "d:graph"], [369, 785, 28, 28, "d:frontier", 1], [575, 785, 28, 28, "d:best_cost"], [502, 715, 141, 33, "s0"]] },
+  sel3: { img: "img/v_sel3.png", hots: [[163, 785, 28, 28, "d:graph"], [369, 785, 28, 28, "d:fr", 1], [575, 785, 28, 28, "d:best_cost"], [502, 715, 141, 33, "s0"]] },
 };
-const items = [[31, 176, 204, 42, "d:graph"], [31, 221, 204, 42, "d:frontier"], [31, 267, 204, 42, "d:best_cost"]];
+const items = [[31, 176, 204, 42, "d:graph"], [31, 221, 204, 42, "d:fr"], [31, 267, 204, 42, "d:best_cost"]];
 const close = [[694, 14, 38, 38, "x"], [500, 406, 78, 34, "x"]];
 const D = {
-  graph:       { img: "img/v_dlg_graph.png", h: 368, hots: [...items, [694, 14, 38, 38, "x"], [500, 314, 78, 34, "x"]] },
-  frontier:    { img: "img/v_dlg_frontier.png", h: 460, hots: [...items, ...close, [268, 167, 450, 34, "d:frontier_dd", 1]] },
-  frontier_dd: { img: "img/v_dlg_frontier_dd.png", h: 460, hots: [[270, 208, 444, 68, "d:frontier"], [694, 14, 38, 38, "x"]] },
-  best_cost:   { img: "img/v_dlg_best_cost.png", h: 460, hots: [...items, ...close] },
+  graph:       { img: "img/v_dlg_graph.png", hots: [...items, [694, 14, 38, 38, "x"], [500, 314, 78, 34, "x"], [584, 314, 132, 34, "x"]] },
+  frontier:    { img: "img/v_dlg_frontier.png", hots: [...items, [694, 14, 38, 38, "x"], [500, 406, 78, 34, "x"], [584, 406, 132, 34, "apply"], [268, 167, 450, 34, "d:frontier_dd", 1]] },
+  frontier_dd: { img: "img/v_dlg_frontier_dd.png", hots: [[270, 208, 444, 33, "d:frontier"], [270, 241, 444, 33, "d:frontier_arr", 1], [694, 14, 38, 38, "x"]] },
+  frontier_arr:{ img: "img/v_dlg_frontier_arr.png", hots: [...items, [694, 14, 38, 38, "x"], [400, 494, 88, 34, "d:frontier"], [498, 494, 78, 34, "x"], [584, 494, 132, 34, "apply", 1], [268, 167, 450, 34, "d:frontier_dd2"]] },
+  frontier_dd2:{ img: "img/v_dlg_frontier_dd2.png", hots: [[270, 208, 444, 33, "d:frontier", 1], [270, 241, 444, 33, "d:frontier_arr"], [694, 14, 38, 38, "x"]] },
+  best_cost:   { img: "img/v_dlg_best_cost.png", hots: [...items, ...close, [584, 406, 132, 34, "x"]] },
 };
 Object.values(L).concat(Object.values(D)).forEach((s) => { const i = new Image(); i.src = s.img; });
 const $ = (id) => document.getElementById(id);
-let cur = "s0";
+let cur = "s0", dcur = null, saved = "frontier";
 function mk(box, hots){ box.innerHTML = ""; hots.forEach(([x, y, w, h, t, g]) => { const d = document.createElement("div"); d.className = "hot" + (g ? " guide" : ""); Object.assign(d.style, { left: x + "px", top: y + "px", width: w + "px", height: h + "px" }); d.onclick = (e) => { e.stopPropagation(); act(t); }; box.append(d); }); }
 function show(k){
   cur = k; const s = L[k]; $("img").src = s.img; mk($("hots"), s.hots);
@@ -54,15 +56,17 @@ function show(k){
   left.scrollTo({ top: want, behavior: "smooth" });
 }
 function dialog(k){
-  const s = D[k], w = $("dwrap"); w.style.display = "block"; $("dimg").src = s.img;
+  if (k === "fr") k = (dcur || "").startsWith("frontier") ? dcur : saved;
+  dcur = k; const s = D[k], w = $("dwrap"); w.style.display = "block"; $("dimg").src = s.img;
   const scale = w.clientWidth / 740; const hs = s.hots.map(([x, y, ww, h, t, g]) => [x * scale, y * scale, ww * scale, h * scale, t, g]); mk($("dhots"), hs);
 }
 function act(t){
-  if (t === "x") { $("dwrap").style.display = "none"; return; }
+  if (t === "apply") { saved = dcur === "frontier_arr" ? "frontier_arr" : "frontier"; t = "x"; }
+  if (t === "x") { $("dwrap").style.display = "none"; dcur = null; return; }
   if (t.startsWith("d:")) { dialog(t.slice(2)); return; }
   show(t);
 }
-$("reset").onclick = () => { $("dwrap").style.display = "none"; show("s0"); };
+$("reset").onclick = () => { $("dwrap").style.display = "none"; dcur = null; saved = "frontier"; show("s0"); };
 show("s0");
 </script>
 </body></html>
