@@ -13,26 +13,27 @@
  .dwrap img{display:block;width:100%;border-radius:10px;box-shadow:0 18px 50px rgba(15,23,42,.22)}
  @keyframes pop{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
  .hot{position:absolute;cursor:pointer;border-radius:8px}
+ .hot:hover{box-shadow:0 0 0 2px rgba(22,119,255,.55)}
  .hot.guide{box-shadow:0 0 0 3px rgba(245,158,11,.9);animation:pulse 1.6s infinite}
  @keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(245,158,11,.9)}50%{box-shadow:0 0 0 7px rgba(245,158,11,.25)}}
- .reset{position:fixed;right:10px;bottom:8px;border:1px solid #d1d5db;background:#fff;border-radius:8px;font-size:13px;color:#6b7280;padding:3px 9px;cursor:pointer;opacity:.45}
- .reset:hover{opacity:1}
+ .reset{position:fixed;right:14px;top:12px;border:1px solid #d1d5db;background:#fff;border-radius:8px;font-size:15px;color:#374151;padding:6px 12px;cursor:pointer;box-shadow:0 2px 8px rgba(15,23,42,.08)}
+ .reset:hover{border-color:#1677ff;color:#1677ff}
 </style></head>
 <body>
 <div class="left" id="left"><div class="stage"><img id="img" alt="Code and Variables"><div id="hots"></div></div></div>
 <div class="right"><div class="dwrap" id="dwrap"><img id="dimg" alt="Watch settings"><div id="dhots"></div></div></div>
-<button class="reset" id="reset">↺ reset</button>
+<button class="reset" id="reset">↺ Start over</button>
 <script>
 // [x, y, w, h, target, guide?]
 const L = {
   s0:   { img: "img/v_s0.png",   hots: [[549, 627, 95, 33, "s1", 1]] },
   s1:   { img: "img/v_s1.png",   hots: [[549, 627, 95, 33, "s0"], [552, 660, 158, 30, "sel0", 1], [552, 693, 158, 30, "adv1", 1]] },
   adv1: { img: "img/v_adv1.png", hots: [[570, 85, 33, 33, "adv2", 1], [611, 85, 33, 33, "s0"]] },
-  adv2: { img: "img/v_adv2.png", hots: [[455, 697, 188, 32, "s0"]] },
-  sel0: { img: "img/v_sel0.png", hots: [[126, 272, 46, 22, "sel1", 1]] },
-  sel1: { img: "img/v_sel1.png", hots: [[126, 314, 74, 22, "sel2", 1]] },
-  sel2: { img: "img/v_sel2.png", hots: [[126, 336, 82, 22, "sel3", 1]] },
-  sel3: { img: "img/v_sel3.png", hots: [[163, 785, 28, 28, "d:graph"], [369, 785, 28, 28, "d:frontier", 1], [575, 785, 28, 28, "d:best_cost"]] },
+  adv2: { img: "img/v_adv2.png", hots: [[455, 697, 188, 32, "s0", 1]] },
+  sel0: { img: "img/v_sel0.png", hots: [[126, 272, 46, 22, "sel1", 1], [502, 715, 141, 33, "s0"]] },
+  sel1: { img: "img/v_sel1.png", hots: [[126, 314, 74, 22, "sel2", 1], [502, 715, 141, 33, "s0"]] },
+  sel2: { img: "img/v_sel2.png", hots: [[126, 336, 82, 22, "sel3", 1], [502, 715, 141, 33, "s0"]] },
+  sel3: { img: "img/v_sel3.png", hots: [[163, 785, 28, 28, "d:graph"], [369, 785, 28, 28, "d:frontier", 1], [575, 785, 28, 28, "d:best_cost"], [502, 715, 141, 33, "s0"]] },
 };
 const items = [[31, 176, 204, 42, "d:graph"], [31, 221, 204, 42, "d:frontier"], [31, 267, 204, 42, "d:best_cost"]];
 const close = [[694, 14, 38, 38, "x"], [500, 406, 78, 34, "x"]];
